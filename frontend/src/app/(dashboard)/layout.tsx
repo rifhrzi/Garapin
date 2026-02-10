@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { AuthGuard } from "@/components/auth/auth-guard";
@@ -56,19 +57,25 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const { user } = useAuthStore();
 
-  const links =
-    user?.role === "ADMIN"
-      ? adminLinks
-      : user?.role === "FREELANCER"
-        ? freelancerLinks
-        : clientLinks;
+  const links = useMemo(
+    () =>
+      user?.role === "ADMIN"
+        ? adminLinks
+        : user?.role === "FREELANCER"
+          ? freelancerLinks
+          : clientLinks,
+    [user?.role],
+  );
 
-  const roleLabel =
-    user?.role === "ADMIN"
-      ? "Admin"
-      : user?.role === "FREELANCER"
-        ? "Freelancer"
-        : "Client";
+  const roleLabel = useMemo(
+    () =>
+      user?.role === "ADMIN"
+        ? "Admin"
+        : user?.role === "FREELANCER"
+          ? "Freelancer"
+          : "Client",
+    [user?.role],
+  );
 
   return (
     <AuthGuard>

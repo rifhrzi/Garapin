@@ -6,8 +6,12 @@ const nextConfig: NextConfig = {
   // Remove X-Powered-By header
   poweredByHeader: false,
 
+  // Enable compression
+  compress: true,
+
   // Image optimization with Supabase remote patterns
   images: {
+    formats: ["image/avif", "image/webp"],
     remotePatterns: [
       {
         protocol: "https",
@@ -19,7 +23,7 @@ const nextConfig: NextConfig = {
 
   // Enable experimental optimizations
   experimental: {
-    optimizePackageImports: ["lucide-react", "radix-ui"],
+    optimizePackageImports: ["lucide-react", "radix-ui", "@supabase/supabase-js"],
   },
 
   // Block search engine indexing on staging

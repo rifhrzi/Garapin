@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,45 @@ import { adminApi, projectApi, bidApi, escrowApi, authApi } from "@/lib/api";
 import type { FreelancerTier, FreelancerProfile } from "@/types/user";
 import type { DashboardStats, Project, Bid, EarningsData } from "@/types";
 
+// Simple in-memory cache to avoid refetching on back-navigation
+const cache = new Map<string, { data: unknown; ts: number }>();
+const CACHE_TTL = 60_000; // 1 minute
+
+function useCachedFetch<T>(key: string, fetcher: () => Promise<T>) {
+  const [data, setData] = useState<T | null>(() => {
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.ts < CACHE_TTL) return hit.data as T;
+    return null;
+  });
+  const [isLoading, setIsLoading] = useState(!data);
+  const fetcherRef = useRef(fetcher);
+  fetcherRef.current = fetcher;
+
+  useEffect(() => {
+    const hit = cache.get(key);
+    if (hit && Date.now() - hit.ts < CACHE_TTL) {
+      setData(hit.data as T);
+      setIsLoading(false);
+      // Revalidate in background
+      fetcherRef.current().then((fresh) => {
+        cache.set(key, { data: fresh, ts: Date.now() });
+        setData(fresh);
+      }).catch(() => {});
+      return;
+    }
+    setIsLoading(true);
+    fetcherRef.current()
+      .then((result) => {
+        cache.set(key, { data: result, ts: Date.now() });
+        setData(result);
+      })
+      .catch(() => {})
+      .finally(() => setIsLoading(false));
+  }, [key]);
+
+  return { data, isLoading };
+}
+
 export default function DashboardPage() {
   const { user, isHydrated } = useAuthStore();
 
@@ -54,30 +93,18 @@ export default function DashboardPage() {
 
 function ClientDashboard() {
   const { user } = useAuthStore();
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { data: projects, isLoading } = useCachedFetch<Project[]>(
+    "client-projects",
+    () => projectApi.getMyProjects(),
+  );
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const data = await projectApi.getMyProjects();
-        setProjects(data);
-      } catch {
-        // Silently fail
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
-
-  const activeProjects = projects.filter(
+  const activeProjects = (projects ?? []).filter(
     (p) => p.status === "IN_PROGRESS" || p.status === "DELIVERED"
   );
-  const completedProjects = projects.filter(
+  const completedProjects = (projects ?? []).filter(
     (p) => p.status === "COMPLETED"
   );
-  const totalProjects = projects.length;
+  const totalProjects = (projects ?? []).length;
 
   return (
     <div className="space-y-6">
@@ -136,7 +163,7 @@ function ClientDashboard() {
             <div className="text-2xl font-bold">
               {isLoading
                 ? "..."
-                : projects.filter((p) => p.status === "OPEN").length}
+                : (projects ?? []).filter((p) => p.status === "OPEN").length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Awaiting bids
@@ -184,30 +211,27 @@ function ClientDashboard() {
 
 function FreelancerDashboard() {
   const { user } = useAuthStore();
-  const [bids, setBids] = useState<Bid[]>([]);
-  const [earnings, setEarnings] = useState<EarningsData | null>(null);
-  const [profile, setProfile] = useState<FreelancerProfile | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [bidsData, earningsData, meData] = await Promise.all([
-          bidApi.getMyBids(),
-          escrowApi.getEarnings(),
-          authApi.me(),
-        ]);
-        setBids(bidsData);
-        setEarnings(earningsData);
-        setProfile(meData.freelancerProfile ?? null);
-      } catch {
-        // Silently fail
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, []);
+  type FreelancerData = { bids: Bid[]; earnings: EarningsData | null; profile: FreelancerProfile | null };
+  const { data, isLoading } = useCachedFetch<FreelancerData>(
+    "freelancer-dashboard",
+    async () => {
+      const [bidsData, earningsData, meData] = await Promise.all([
+        bidApi.getMyBids(),
+        escrowApi.getEarnings(),
+        authApi.me(),
+      ]);
+      return {
+        bids: bidsData,
+        earnings: earningsData,
+        profile: meData.freelancerProfile ?? null,
+      };
+    },
+  );
+
+  const bids = data?.bids ?? [];
+  const earnings = data?.earnings ?? null;
+  const profile = data?.profile ?? null;
 
   const tier = (profile?.tier ?? "BRONZE") as FreelancerTier;
   const avgRating = profile?.avgRating ?? 0;
@@ -349,22 +373,10 @@ function FreelancerDashboard() {
 
 function AdminDashboard() {
   const { user } = useAuthStore();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchStats() {
-      try {
-        const data = await adminApi.getDashboardStats();
-        setStats(data);
-      } catch {
-        // fallback to placeholders
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchStats();
-  }, []);
+  const { data: stats, isLoading } = useCachedFetch<DashboardStats>(
+    "admin-stats",
+    () => adminApi.getDashboardStats(),
+  );
 
   return (
     <div className="space-y-6">

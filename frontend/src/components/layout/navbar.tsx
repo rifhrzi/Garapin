@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Button } from "@/components/ui/button";
@@ -14,13 +15,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Sheet,
-  SheetContent,
-  SheetTrigger,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
-import {
   Menu,
   LayoutDashboard,
   LogOut,
@@ -30,41 +24,56 @@ import {
   Shield,
   MessageSquare,
 } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState, useCallback } from "react";
+
+// Lazy-load mobile Sheet menu (hidden on desktop)
+const Sheet = dynamic(() => import("@/components/ui/sheet").then((m) => m.Sheet), { ssr: false });
+const SheetContent = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetContent), { ssr: false });
+const SheetTrigger = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetTrigger), { ssr: false });
+const SheetHeader = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetHeader), { ssr: false });
+const SheetTitle = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetTitle), { ssr: false });
+
+// Static link arrays -- defined outside component to avoid recreation
+const navLinks = [
+  { href: "/projects", label: "Browse Projects", icon: Search },
+] as const;
+
+const authNavLinks = [
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+] as const;
 
 export function Navbar() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
   const [open, setOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout();
     router.push("/");
-  };
+  }, [logout, router]);
 
-  const navLinks = [
-    { href: "/projects", label: "Browse Projects", icon: Search },
-  ];
+  const initials = useMemo(
+    () =>
+      user?.displayName
+        ? user.displayName
+            .split(" ")
+            .map((n) => n[0])
+            .join("")
+            .toUpperCase()
+            .slice(0, 2)
+        : "??",
+    [user?.displayName],
+  );
 
-  const authNavLinks = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  ];
-
-  const initials = user?.displayName
-    ? user.displayName
-        .split(" ")
-        .map((n) => n[0])
-        .join("")
-        .toUpperCase()
-        .slice(0, 2)
-    : "??";
-
-  const roleBadge =
-    user?.role === "FREELANCER"
-      ? "Freelancer"
-      : user?.role === "CLIENT"
-        ? "Client"
-        : "Admin";
+  const roleBadge = useMemo(
+    () =>
+      user?.role === "FREELANCER"
+        ? "Freelancer"
+        : user?.role === "CLIENT"
+          ? "Client"
+          : "Admin",
+    [user?.role],
+  );
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">

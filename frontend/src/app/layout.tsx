@@ -15,11 +15,13 @@ const midtransSnapUrl =
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
+  display: "swap",
 });
 
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -46,6 +48,9 @@ export default function RootLayout({
   return (
     <html lang="id">
       <head>
+        <link rel="preconnect" href="https://mkvshcctlirkajddfhnu.supabase.co" />
+        <link rel="dns-prefetch" href="https://mkvshcctlirkajddfhnu.supabase.co" />
+        <link rel="dns-prefetch" href="https://app.sandbox.midtrans.com" />
         <Script
           src={midtransSnapUrl}
           data-client-key={process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
