@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
   CardContent,
@@ -42,6 +43,11 @@ const registerSchema = z
       .max(100),
     phone: z.string().optional(),
     companyName: z.string().optional(),
+    acceptTerms: z.literal(true, {
+      errorMap: () => ({
+        message: "You must accept the Terms & Conditions",
+      }),
+    }),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -69,6 +75,7 @@ function RegisterForm_() {
       displayName: "",
       phone: "",
       companyName: "",
+      acceptTerms: undefined as unknown as true,
     },
   });
 
@@ -247,6 +254,36 @@ function RegisterForm_() {
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="acceptTerms"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-3">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value === true}
+                      onCheckedChange={(checked) =>
+                        field.onChange(checked === true ? true : undefined)
+                      }
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      I agree to the{" "}
+                      <Link
+                        href="/terms"
+                        target="_blank"
+                        className="font-medium text-primary underline underline-offset-4 hover:text-primary/80"
+                        onClick={(e) => e.stopPropagation()}>
+                        Terms &amp; Conditions
+                      </Link>
+                    </FormLabel>
+                    <FormMessage />
+                  </div>
                 </FormItem>
               )}
             />

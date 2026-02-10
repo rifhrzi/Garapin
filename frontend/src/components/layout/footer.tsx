@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Mail } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export function Footer() {
@@ -17,6 +17,12 @@ export function Footer() {
               Platform freelance Indonesia terpercaya dengan sistem escrow dan
               tier profesional.
             </p>
+            <a
+              href="mailto:garapinajadigarapin@gmail.com"
+              className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1.5 mt-3">
+              <Mail className="h-3.5 w-3.5" />
+              garapinajadigarapin@gmail.com
+            </a>
           </div>
 
           {/* For Clients */}
@@ -78,6 +84,21 @@ export function Footer() {
                   className="hover:text-foreground transition-colors">
                   Register
                 </Link>
+              </li>
+              <li>
+                <Link
+                  href="/terms"
+                  className="hover:text-foreground transition-colors">
+                  Terms &amp; Conditions
+                </Link>
+              </li>
+              <li>
+                <a
+                  href="mailto:garapinajadigarapin@gmail.com"
+                  className="hover:text-foreground transition-colors flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5" />
+                  Customer Service
+                </a>
               </li>
             </ul>
           </div>
