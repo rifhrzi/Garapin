@@ -13,6 +13,11 @@ import { disputeService } from './services/dispute.service';
 
 const app = express();
 
+// Trust proxy when behind a reverse proxy (Railway, Heroku, etc.)
+if (env.NODE_ENV !== 'development') {
+  app.set('trust proxy', 1);
+}
+
 // Security & parsing
 app.use(helmet());
 app.use(compression());
