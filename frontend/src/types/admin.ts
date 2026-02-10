@@ -242,24 +242,30 @@ export interface AdminEscrow {
 // ─── Admin Payouts ──────────────────────────────────────
 export interface AdminPayout {
   id: string;
-  escrowId: string;
+  escrowId: string | null;
   freelancerId: string;
   amount: number;
   midtransPayoutId: string | null;
   status: PayoutStatus;
   bankCode: string | null;
+  bankName: string | null;
   accountNumber: string | null;
   accountHolderName: string | null;
+  notes: string | null;
+  failedReason: string | null;
+  processedBy: string | null;
+  processedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
   freelancer: {
     id: string;
     email: string;
     freelancerProfile?: { displayName: string } | null;
   };
-  escrow: {
+  escrow?: {
     id: string;
     project: { id: string; title: string };
-  };
+  } | null;
 }
 
 // ─── Admin Activity Log ─────────────────────────────────

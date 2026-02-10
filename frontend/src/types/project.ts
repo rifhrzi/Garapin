@@ -43,11 +43,19 @@ export interface Payout {
   createdAt: string;
 }
 
+export interface BankDetails {
+  bankCode: string | null;
+  bankName: string | null;
+  accountNumber: string | null;
+  accountHolderName: string | null;
+}
+
 export interface EarningsSummary {
   totalEarned: number;
   inEscrow: number;
   available: number;
   thisMonth: number;
+  pendingPayout: number;
 }
 
 export interface PayoutHistoryItem {
@@ -55,9 +63,13 @@ export interface PayoutHistoryItem {
   amount: number;
   status: PayoutStatus;
   bankCode: string | null;
+  bankName: string | null;
   accountNumber: string | null;
-  projectTitle: string;
-  projectId: string;
+  accountHolderName: string | null;
+  notes: string | null;
+  failedReason: string | null;
+  processedAt: string | null;
+  completedAt: string | null;
   createdAt: string;
 }
 

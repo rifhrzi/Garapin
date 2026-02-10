@@ -16,6 +16,8 @@ import type {
   ProjectStatus,
   Escrow,
   EarningsData,
+  BankDetails,
+  PayoutHistoryItem,
   ConversationListItem,
   Conversation,
   Message,
@@ -216,6 +218,46 @@ export const userApi = {
   }) {
     const { data } = await api.get<PaginatedResponse<unknown>>('/users/freelancers', { params });
     return data;
+  },
+
+  async getBankDetails() {
+    const { data } = await api.get<ApiResponse<BankDetails>>('/users/bank-details');
+    return data.data;
+  },
+
+  async updateBankDetails(payload: {
+    bankCode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  }) {
+    const { data } = await api.put<ApiResponse<BankDetails>>('/users/bank-details', payload);
+    return data.data;
+  },
+};
+
+// ─── Payout API ──────────────────────────────────────────
+export const payoutApi = {
+  async requestPayout(amount: number) {
+    const { data } = await api.post<ApiResponse<PayoutHistoryItem>>('/payouts/request', { amount });
+    return data.data;
+  },
+
+  async getHistory(page = 1, limit = 20) {
+    const { data } = await api.get<PaginatedResponse<PayoutHistoryItem>>('/payouts/history', {
+      params: { page, limit },
+    });
+    return data;
+  },
+
+  async getAvailableBalance() {
+    const { data } = await api.get<ApiResponse<{ available: number }>>('/payouts/balance');
+    return data.data;
+  },
+
+  async cancelPayout(id: string) {
+    const { data } = await api.put<ApiResponse<{ message: string }>>(`/payouts/${id}/cancel`);
+    return data.data;
   },
 };
 
@@ -523,6 +565,21 @@ export const adminApi = {
   async listPayouts(params?: { status?: string; page?: number; limit?: number }) {
     const { data } = await api.get<PaginatedResponse<AdminPayout>>('/admin/payouts', { params });
     return data;
+  },
+
+  async processPayout(id: string) {
+    const { data } = await api.put<ApiResponse<AdminPayout>>(`/admin/payouts/${id}/process`);
+    return data.data;
+  },
+
+  async completePayout(id: string) {
+    const { data } = await api.put<ApiResponse<AdminPayout>>(`/admin/payouts/${id}/complete`);
+    return data.data;
+  },
+
+  async failPayout(id: string, reason: string) {
+    const { data } = await api.put<ApiResponse<AdminPayout>>(`/admin/payouts/${id}/fail`, { reason });
+    return data.data;
   },
 
   async getActivityLog(params?: { page?: number; limit?: number }) {

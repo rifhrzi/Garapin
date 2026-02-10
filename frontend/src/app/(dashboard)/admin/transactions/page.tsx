@@ -4,6 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -12,20 +14,33 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { adminApi } from "@/lib/api";
 import { formatRupiah } from "@/types/project";
 import type { AdminEscrow, AdminPayout } from "@/types";
+import { toast } from "sonner";
 import {
   CreditCard,
   Loader2,
   DollarSign,
   User,
-  Briefcase,
   ChevronLeft,
   ChevronRight,
   Banknote,
   ArrowRightLeft,
   Calendar,
+  Play,
+  CheckCircle2,
+  XCircle,
+  Building2,
+  AlertTriangle,
 } from "lucide-react";
 
 const ESCROW_COLORS: Record<string, string> = {
@@ -87,6 +102,7 @@ export default function AdminTransactionsPage() {
   );
 }
 
+// ─── Escrows Tab (unchanged) ─────────────────────────────
 function EscrowsTab() {
   const [escrows, setEscrows] = useState<AdminEscrow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -124,7 +140,8 @@ function EscrowsTab() {
           onValueChange={(v) => {
             setStatusFilter(v);
             setPage(1);
-          }}>
+          }}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
@@ -160,7 +177,8 @@ function EscrowsTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Badge
-                        className={`text-xs ${ESCROW_COLORS[escrow.status] || ""}`}>
+                        className={`text-xs ${ESCROW_COLORS[escrow.status] || ""}`}
+                      >
                         {escrow.status}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
@@ -243,7 +261,8 @@ function EscrowsTab() {
                   variant="outline"
                   size="sm"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}>
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
@@ -251,7 +270,8 @@ function EscrowsTab() {
                   variant="outline"
                   size="sm"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}>
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -264,12 +284,19 @@ function EscrowsTab() {
   );
 }
 
+// ─── Payouts Tab ─────────────────────────────────────────
 function PayoutsTab() {
   const [payouts, setPayouts] = useState<AdminPayout[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [statusFilter, setStatusFilter] = useState("all");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [failDialog, setFailDialog] = useState<{
+    open: boolean;
+    payoutId: string;
+    reason: string;
+  }>({ open: false, payoutId: "", reason: "" });
   const limit = 20;
 
   const fetchPayouts = useCallback(async () => {
@@ -291,6 +318,50 @@ function PayoutsTab() {
     fetchPayouts();
   }, [fetchPayouts]);
 
+  async function handleProcess(payoutId: string) {
+    setActionLoading(payoutId);
+    try {
+      await adminApi.processPayout(payoutId);
+      toast.success("Payout marked as processing");
+      fetchPayouts();
+    } catch {
+      toast.error("Failed to process payout");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleComplete(payoutId: string) {
+    setActionLoading(payoutId);
+    try {
+      await adminApi.completePayout(payoutId);
+      toast.success("Payout marked as completed");
+      fetchPayouts();
+    } catch {
+      toast.error("Failed to complete payout");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
+  async function handleFail() {
+    if (!failDialog.reason || failDialog.reason.length < 5) {
+      toast.error("Please provide a reason (min 5 characters)");
+      return;
+    }
+    setActionLoading(failDialog.payoutId);
+    try {
+      await adminApi.failPayout(failDialog.payoutId, failDialog.reason);
+      toast.success("Payout marked as failed");
+      setFailDialog({ open: false, payoutId: "", reason: "" });
+      fetchPayouts();
+    } catch {
+      toast.error("Failed to update payout");
+    } finally {
+      setActionLoading(null);
+    }
+  }
+
   const totalPages = Math.ceil(total / limit);
 
   return (
@@ -301,7 +372,8 @@ function PayoutsTab() {
           onValueChange={(v) => {
             setStatusFilter(v);
             setPage(1);
-          }}>
+          }}
+        >
           <SelectTrigger className="w-[160px]">
             <SelectValue placeholder="Filter status" />
           </SelectTrigger>
@@ -336,7 +408,8 @@ function PayoutsTab() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap mb-1">
                       <Badge
-                        className={`text-xs ${PAYOUT_COLORS[payout.status] || ""}`}>
+                        className={`text-xs ${PAYOUT_COLORS[payout.status] || ""}`}
+                      >
                         {payout.status}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
@@ -348,9 +421,15 @@ function PayoutsTab() {
                       </span>
                     </div>
 
-                    <h3 className="font-semibold text-sm">
-                      {payout.escrow.project.title}
-                    </h3>
+                    {payout.escrow ? (
+                      <h3 className="font-semibold text-sm">
+                        {payout.escrow.project.title}
+                      </h3>
+                    ) : (
+                      <h3 className="font-semibold text-sm text-muted-foreground">
+                        Withdrawal Request
+                      </h3>
+                    )}
 
                     <div className="flex items-center gap-4 mt-2 flex-wrap text-xs text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -365,20 +444,131 @@ function PayoutsTab() {
                       </span>
                     </div>
 
+                    {/* Bank details for admin reference */}
+                    {(payout.bankCode || payout.accountNumber) && (
+                      <div className="flex items-center gap-3 mt-2 p-2 bg-muted/50 rounded text-xs">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        {payout.bankCode && (
+                          <Badge variant="outline" className="text-xs">
+                            {payout.bankCode}
+                          </Badge>
+                        )}
+                        {payout.bankName && (
+                          <span className="text-muted-foreground">
+                            {payout.bankName}
+                          </span>
+                        )}
+                        {payout.accountNumber && (
+                          <span className="font-mono">
+                            {payout.accountNumber}
+                          </span>
+                        )}
+                        {payout.accountHolderName && (
+                          <span className="font-medium">
+                            {payout.accountHolderName}
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {payout.failedReason && (
+                      <div className="flex items-center gap-1.5 mt-2 text-xs text-destructive">
+                        <AlertTriangle className="h-3 w-3" />
+                        {payout.failedReason}
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-4 mt-1.5 flex-wrap text-xs text-muted-foreground">
-                      {payout.bankCode && (
-                        <span>Bank: {payout.bankCode}</span>
+                      {payout.processedAt && (
+                        <span>
+                          Processed:{" "}
+                          {new Date(payout.processedAt).toLocaleDateString(
+                            "id-ID",
+                          )}
+                        </span>
                       )}
-                      {payout.accountNumber && (
-                        <span>Acc: ****{payout.accountNumber.slice(-4)}</span>
-                      )}
-                      {payout.accountHolderName && (
-                        <span>Holder: {payout.accountHolderName}</span>
+                      {payout.completedAt && (
+                        <span>
+                          Completed:{" "}
+                          {new Date(payout.completedAt).toLocaleDateString(
+                            "id-ID",
+                          )}
+                        </span>
                       )}
                       {payout.midtransPayoutId && (
                         <span>Midtrans: {payout.midtransPayoutId}</span>
                       )}
                     </div>
+                  </div>
+
+                  {/* Action buttons */}
+                  <div className="shrink-0 flex flex-col gap-1.5">
+                    {payout.status === "PENDING" && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => handleProcess(payout.id)}
+                          disabled={actionLoading === payout.id}
+                        >
+                          {actionLoading === payout.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Play className="h-3.5 w-3.5" />
+                          )}
+                          Process
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-1.5"
+                          onClick={() =>
+                            setFailDialog({
+                              open: true,
+                              payoutId: payout.id,
+                              reason: "",
+                            })
+                          }
+                          disabled={actionLoading === payout.id}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Fail
+                        </Button>
+                      </>
+                    )}
+                    {payout.status === "PROCESSING" && (
+                      <>
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => handleComplete(payout.id)}
+                          disabled={actionLoading === payout.id}
+                        >
+                          {actionLoading === payout.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          )}
+                          Complete
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          className="gap-1.5"
+                          onClick={() =>
+                            setFailDialog({
+                              open: true,
+                              payoutId: payout.id,
+                              reason: "",
+                            })
+                          }
+                          disabled={actionLoading === payout.id}
+                        >
+                          <XCircle className="h-3.5 w-3.5" />
+                          Fail
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
               </CardContent>
@@ -395,7 +585,8 @@ function PayoutsTab() {
                   variant="outline"
                   size="sm"
                   disabled={page <= 1}
-                  onClick={() => setPage((p) => p - 1)}>
+                  onClick={() => setPage((p) => p - 1)}
+                >
                   <ChevronLeft className="h-4 w-4" />
                   Previous
                 </Button>
@@ -403,7 +594,8 @@ function PayoutsTab() {
                   variant="outline"
                   size="sm"
                   disabled={page >= totalPages}
-                  onClick={() => setPage((p) => p + 1)}>
+                  onClick={() => setPage((p) => p + 1)}
+                >
                   Next
                   <ChevronRight className="h-4 w-4" />
                 </Button>
@@ -412,6 +604,61 @@ function PayoutsTab() {
           )}
         </div>
       )}
+
+      {/* Fail Reason Dialog */}
+      <Dialog
+        open={failDialog.open}
+        onOpenChange={(open) => {
+          if (!open) setFailDialog({ open: false, payoutId: "", reason: "" });
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Payout</DialogTitle>
+            <DialogDescription>
+              Provide a reason for rejecting this payout. The funds will be
+              returned to the freelancer&apos;s available balance.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="failReason">Reason</Label>
+              <Input
+                id="failReason"
+                placeholder="e.g. Invalid bank details, verification needed..."
+                value={failDialog.reason}
+                onChange={(e) =>
+                  setFailDialog({ ...failDialog, reason: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() =>
+                setFailDialog({ open: false, payoutId: "", reason: "" })
+              }
+              disabled={actionLoading === failDialog.payoutId}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleFail}
+              disabled={
+                actionLoading === failDialog.payoutId ||
+                failDialog.reason.length < 5
+              }
+            >
+              {actionLoading === failDialog.payoutId && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Reject Payout
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
