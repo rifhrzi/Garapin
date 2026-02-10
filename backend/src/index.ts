@@ -21,7 +21,17 @@ if (env.NODE_ENV !== 'development') {
 // Security & parsing
 app.use(helmet());
 app.use(compression());
-app.use(cors({ origin: env.FRONTEND_URL, credentials: true }));
+app.use(cors({
+  origin: (origin, callback) => {
+    const allowed = env.FRONTEND_URL.split(',').map((u) => u.trim());
+    if (!origin || allowed.includes(origin) || allowed.some((a) => origin.endsWith('.vercel.app') && a.endsWith('.vercel.app'))) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(sanitizeBody);
