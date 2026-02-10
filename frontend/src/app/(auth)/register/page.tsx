@@ -44,9 +44,7 @@ const registerSchema = z
     phone: z.string().optional(),
     companyName: z.string().optional(),
     acceptTerms: z.literal(true, {
-      errorMap: () => ({
-        message: "You must accept the Terms & Conditions",
-      }),
+      message: "You must accept the Terms & Conditions",
     }),
   })
   .refine((data) => data.password === data.confirmPassword, {
