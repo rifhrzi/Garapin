@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────
+
+enum Role {
+  CLIENT
+  FREELANCER
+  ADMIN
+}
+
+enum FreelancerTier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  LEGEND
+}
+
+enum ProjectType {
+  QUICK_TASK
+  WEEKLY_PROJECT
+}
+
+enum ProjectStatus {
+  DRAFT
+  OPEN
+  IN_PROGRESS
+  DELIVERED
+  COMPLETED
+  DISPUTED
+  CANCELLED
+}
+
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+}
+
+enum MilestoneStatus {
+  PENDING
+  FUNDED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum EscrowStatus {
+  PENDING
+  FUNDED
+  RELEASED
+  REFUNDED
+  DISPUTED
+}
+
+enum PayoutStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum MessageType {
+  TEXT
+  FILE
+  SYSTEM
+}
+
+enum DisputeStatus {
+  OPEN
+  UNDER_REVIEW
+  RESOLVED
+  CLOSED
+}
+
+enum DisputeOutcome {
+  FULL_REFUND
+  PARTIAL_REFUND
+  NO_REFUND
+}
+
+enum FlagType {
+  PHONE
+  EMAIL
+  URL
+  SOCIAL_MEDIA
+  KEYWORD
+  BEHAVIORAL
+}
+
+// ─── Models ──────────────────────────────────────────────
+
+model User {
+  id             String   @id @default(uuid())
+  email          String   @unique
+  phone          String?
+  passwordHash   String   @map("password_hash")
+  role           Role
+  emailVerified  Boolean  @default(false) @map("email_verified")
+  phoneVerified  Boolean  @default(false) @map("phone_verified")
+  isSuspended    Boolean  @default(false) @map("is_suspended")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  freelancerProfile FreelancerProfile?
+  clientProfile     ClientProfile?
+  projects          Project[]          @relation("ClientProjects")
+  selectedProjects  Project[]          @relation("FreelancerProjects")
+  bids              Bid[]
+  sentMessages      Message[]
+  reviewsWritten    Review[]           @relation("ReviewerReviews")
+  reviewsReceived   Review[]           @relation("RevieweeReviews")
+  disputesInitiated Dispute[]          @relation("DisputeInitiator")
+  disputesHandled   Dispute[]          @relation("DisputeAdmin")
+  adminActions      AdminAction[]
+  escrowsAsClient   Escrow[]           @relation("EscrowClient")
+  escrowsAsFreelancer Escrow[]         @relation("EscrowFreelancer")
+  payouts           Payout[]
+  deliveries        Delivery[]       @relation("FreelancerDeliveries")
+
+  @@map("users")
+}
+
+model FreelancerProfile {
+  id                String        @id @default(uuid())
+  userId            String        @unique @map("user_id")
+  displayName       String        @map("display_name")
+  bio               String?
+  avatarUrl         String?       @map("avatar_url")
+  portfolioLinks    Json          @default("[]") @map("portfolio_links")
+  tier              FreelancerTier @default(BRONZE)
+  expPoints         Int           @default(0) @map("exp_points")
+  completedProjects Int           @default(0) @map("completed_projects")
+  avgRating         Float         @default(0) @map("avg_rating")
+  completionRate    Float         @default(100) @map("completion_rate")
+  disputeRate       Float         @default(0) @map("dispute_rate")
+  responseTimeAvg   Float         @default(0) @map("response_time_avg")
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("freelancer_profiles")
+}
+
+model ClientProfile {
+  id              String  @id @default(uuid())
+  userId          String  @unique @map("user_id")
+  displayName     String  @map("display_name")
+  companyName     String? @map("company_name")
+  hasValidPayment Boolean @default(false) @map("has_valid_payment")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("client_profiles")
+}
+
+model Category {
+  id       String   @id @default(uuid())
+  name     String
+  slug     String   @unique
+  minPrice Decimal  @map("min_price") @db.Decimal(12, 2)
+  isActive Boolean  @default(true) @map("is_active")
+
+  projects Project[]
+
+  @@map("categories")
+}
+
+model Project {
+  id                   String        @id @default(uuid())
+  clientId             String        @map("client_id")
+  categoryId           String        @map("category_id")
+  title                String
+  description          String
+  type                 ProjectType
+  budgetMin            Decimal       @map("budget_min") @db.Decimal(12, 2)
+  budgetMax            Decimal       @map("budget_max") @db.Decimal(12, 2)
+  deadline             DateTime
+  status               ProjectStatus @default(DRAFT)
+  selectedFreelancerId String?       @map("selected_freelancer_id")
+  createdAt            DateTime      @default(now()) @map("created_at")
+  updatedAt            DateTime      @updatedAt @map("updated_at")
+
+  client              User          @relation("ClientProjects", fields: [clientId], references: [id])
+  selectedFreelancer  User?         @relation("FreelancerProjects", fields: [selectedFreelancerId], references: [id])
+  category            Category      @relation(fields: [categoryId], references: [id])
+  bids                Bid[]
+  milestones          Milestone[]
+  escrow              Escrow?
+  conversation        Conversation?
+  disputes            Dispute[]
+  reviews             Review[]
+  deliveries          Delivery[]
+
+  @@index([status])
+  @@index([clientId])
+  @@index([selectedFreelancerId])
+  @@index([categoryId])
+  @@index([status, createdAt])
+  @@map("projects")
+}
+
+model Milestone {
+  id        String          @id @default(uuid())
+  projectId String          @map("project_id")
+  title     String
+  amount    Decimal         @db.Decimal(12, 2)
+  dueDate   DateTime?       @map("due_date")
+  status    MilestoneStatus @default(PENDING)
+  sortOrder Int             @default(0) @map("sort_order")
+  createdAt DateTime        @default(now()) @map("created_at")
+  updatedAt DateTime        @updatedAt @map("updated_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@map("milestones")
+}
+
+model Bid {
+  id            String    @id @default(uuid())
+  projectId     String    @map("project_id")
+  freelancerId  String    @map("freelancer_id")
+  amount        Decimal   @db.Decimal(12, 2)
+  proposal      String
+  estimatedDays Int       @map("estimated_days")
+  status        BidStatus @default(PENDING)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  freelancer User    @relation(fields: [freelancerId], references: [id])
+
+  @@unique([projectId, freelancerId])
+  @@index([projectId])
+  @@index([freelancerId])
+  @@index([status])
+  @@map("bids")
+}
+
+model Escrow {
+  id                String       @id @default(uuid())
+  projectId         String       @unique @map("project_id")
+  clientId          String       @map("client_id")
+  freelancerId      String       @map("freelancer_id")
+  totalAmount       Decimal      @map("total_amount") @db.Decimal(12, 2)
+  platformFee       Decimal      @map("platform_fee") @db.Decimal(12, 2)
+  freelancerAmount  Decimal      @map("freelancer_amount") @db.Decimal(12, 2)
+  status            EscrowStatus @default(PENDING)
+  midtransOrderId   String?      @map("midtrans_order_id")
+  midtransSnapToken String?      @map("midtrans_snap_token")
+  fundedAt          DateTime?    @map("funded_at")
+  releasedAt        DateTime?    @map("released_at")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  project    Project  @relation(fields: [projectId], references: [id])
+  client     User     @relation("EscrowClient", fields: [clientId], references: [id])
+  freelancer User     @relation("EscrowFreelancer", fields: [freelancerId], references: [id])
+  payouts    Payout[]
+
+  @@index([clientId])
+  @@index([freelancerId])
+  @@index([status])
+  @@map("escrows")
+}
+
+model Payout {
+  id                    String       @id @default(uuid())
+  escrowId              String       @map("escrow_id")
+  freelancerId          String       @map("freelancer_id")
+  amount                Decimal      @db.Decimal(12, 2)
+  midtransPayoutId      String?      @map("midtrans_payout_id")
+  status                PayoutStatus @default(PENDING)
+  bankCode              String?      @map("bank_code")
+  accountNumber         String?      @map("account_number")
+  accountHolderName     String?      @map("account_holder_name")
+  createdAt             DateTime     @default(now()) @map("created_at")
+  updatedAt             DateTime     @updatedAt @map("updated_at")
+
+  escrow     Escrow @relation(fields: [escrowId], references: [id])
+  freelancer User   @relation(fields: [freelancerId], references: [id])
+
+  @@index([escrowId])
+  @@index([freelancerId])
+  @@map("payouts")
+}
+
+model Conversation {
+  id           String   @id @default(uuid())
+  projectId    String   @unique @map("project_id")
+  escrowActive Boolean  @default(false) @map("escrow_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project  Project   @relation(fields: [projectId], references: [id])
+  messages Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id              String      @id @default(uuid())
+  conversationId  String      @map("conversation_id")
+  senderId        String      @map("sender_id")
+  content         String
+  originalContent String?     @map("original_content")
+  type            MessageType @default(TEXT)
+  fileUrl         String?     @map("file_url")
+  wasFiltered     Boolean     @default(false) @map("was_filtered")
+  filterReason    String?     @map("filter_reason")
+  createdAt       DateTime    @default(now()) @map("created_at")
+
+  conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  sender       User         @relation(fields: [senderId], references: [id])
+  flags        MessageFlag[]
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@map("messages")
+}
+
+model MessageFlag {
+  id             String   @id @default(uuid())
+  messageId      String   @map("message_id")
+  flagType       FlagType @map("flag_type")
+  matchedPattern String   @map("matched_pattern")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+  @@map("message_flags")
+}
+
+model Review {
+  id         String   @id @default(uuid())
+  projectId  String   @map("project_id")
+  reviewerId String   @map("reviewer_id")
+  revieweeId String   @map("reviewee_id")
+  rating     Int
+  comment    String?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  project  Project @relation(fields: [projectId], references: [id])
+  reviewer User    @relation("ReviewerReviews", fields: [reviewerId], references: [id])
+  reviewee User    @relation("RevieweeReviews", fields: [revieweeId], references: [id])
+
+  @@unique([projectId, reviewerId])
+  @@index([projectId])
+  @@index([revieweeId])
+  @@map("reviews")
+}
+
+model Dispute {
+  id           String         @id @default(uuid())
+  projectId    String         @map("project_id")
+  initiatedBy  String         @map("initiated_by")
+  adminId      String?        @map("admin_id")
+  reason       String
+  description  String
+  status       DisputeStatus  @default(OPEN)
+  resolution   String?
+  outcome      DisputeOutcome?
+  createdAt    DateTime       @default(now()) @map("created_at")
+  resolvedAt   DateTime?      @map("resolved_at")
+  updatedAt    DateTime       @updatedAt @map("updated_at")
+
+  project   Project @relation(fields: [projectId], references: [id])
+  initiator User    @relation("DisputeInitiator", fields: [initiatedBy], references: [id])
+  admin     User?   @relation("DisputeAdmin", fields: [adminId], references: [id])
+
+  @@index([status])
+  @@index([projectId])
+  @@map("disputes")
+}
+
+model AdminAction {
+  id         String   @id @default(uuid())
+  adminId    String   @map("admin_id")
+  actionType String   @map("action_type")
+  targetType String   @map("target_type")
+  targetId   String   @map("target_id")
+  details    Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  admin User @relation(fields: [adminId], references: [id])
+
+  @@index([adminId])
+  @@index([targetId])
+  @@map("admin_actions")
+}
+
+model Delivery {
+  id           String   @id @default(uuid())
+  projectId    String   @map("project_id")
+  freelancerId String   @map("freelancer_id")
+  description  String
+  fileUrl      String?  @map("file_url")
+  link         String?
+  report       String?
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  project    Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  freelancer User    @relation("FreelancerDeliveries", fields: [freelancerId], references: [id])
+
+  @@index([projectId])
+  @@index([freelancerId])
+  @@map("deliveries")
+}

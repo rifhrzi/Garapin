@@ -1,0 +1,8 @@
+node_modules/
+dist/
+*.log
+
+# env files — keep .env.example tracked as a template
+.env
+.env.staging
+.env.production
