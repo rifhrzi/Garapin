@@ -43,6 +43,24 @@ export class UserController {
     }
   }
 
+  async updateBankDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await userService.updateBankDetails(req.user!.userId, req.body);
+      sendSuccess(res, result, 'Bank details updated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getBankDetails(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await userService.getBankDetails(req.user!.userId);
+      sendSuccess(res, result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async searchFreelancers(req: Request, res: Response, next: NextFunction) {
     try {
       const result = await userService.searchFreelancers(req.query as any);

@@ -110,6 +110,37 @@ export class AdminController {
     }
   }
 
+  async processPayout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminService.processPayout(req.params.id as string, req.user!.userId);
+      sendSuccess(res, result, 'Payout marked as processing');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async completePayout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminService.completePayout(req.params.id as string, req.user!.userId);
+      sendSuccess(res, result, 'Payout completed');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async failPayout(req: Request, res: Response, next: NextFunction) {
+    try {
+      const result = await adminService.failPayout(
+        req.params.id as string,
+        req.user!.userId,
+        req.body.reason,
+      );
+      sendSuccess(res, result, 'Payout marked as failed');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async enhancedDashboard(req: Request, res: Response, next: NextFunction) {
     try {
       const stats = await adminService.getEnhancedDashboardStats();

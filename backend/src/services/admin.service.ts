@@ -1,6 +1,6 @@
 import prisma from '../config/database';
 import { Prisma } from '@prisma/client';
-import { NotFoundError } from '../utils/errors';
+import { AppError, NotFoundError } from '../utils/errors';
 
 export class AdminService {
   async getDashboardStats() {
@@ -324,6 +324,93 @@ export class AdminService {
     ]);
 
     return { actions, total, page, limit };
+  }
+
+  // ─── Payout Processing ──────────────────────────────────
+
+  async processPayout(payoutId: string, adminId: string) {
+    const payout = await prisma.payout.findUnique({ where: { id: payoutId } });
+    if (!payout) throw new NotFoundError('Payout');
+    if (payout.status !== 'PENDING') {
+      throw new AppError(`Cannot process payout with status ${payout.status}`, 400);
+    }
+
+    const updated = await prisma.payout.update({
+      where: { id: payoutId },
+      data: {
+        status: 'PROCESSING',
+        processedBy: adminId,
+        processedAt: new Date(),
+      },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'PROCESS_PAYOUT',
+        targetType: 'PAYOUT',
+        targetId: payoutId,
+        details: { amount: Number(payout.amount), freelancerId: payout.freelancerId },
+      },
+    });
+
+    return updated;
+  }
+
+  async completePayout(payoutId: string, adminId: string) {
+    const payout = await prisma.payout.findUnique({ where: { id: payoutId } });
+    if (!payout) throw new NotFoundError('Payout');
+    if (payout.status !== 'PROCESSING') {
+      throw new AppError(`Cannot complete payout with status ${payout.status}`, 400);
+    }
+
+    const updated = await prisma.payout.update({
+      where: { id: payoutId },
+      data: {
+        status: 'COMPLETED',
+        completedAt: new Date(),
+      },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'COMPLETE_PAYOUT',
+        targetType: 'PAYOUT',
+        targetId: payoutId,
+        details: { amount: Number(payout.amount), freelancerId: payout.freelancerId },
+      },
+    });
+
+    return updated;
+  }
+
+  async failPayout(payoutId: string, adminId: string, reason: string) {
+    const payout = await prisma.payout.findUnique({ where: { id: payoutId } });
+    if (!payout) throw new NotFoundError('Payout');
+    if (!['PENDING', 'PROCESSING'].includes(payout.status)) {
+      throw new AppError(`Cannot fail payout with status ${payout.status}`, 400);
+    }
+
+    const updated = await prisma.payout.update({
+      where: { id: payoutId },
+      data: {
+        status: 'FAILED',
+        failedReason: reason,
+      },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'FAIL_PAYOUT',
+        targetType: 'PAYOUT',
+        targetId: payoutId,
+        details: { amount: Number(payout.amount), freelancerId: payout.freelancerId, reason },
+      },
+    });
+
+    return updated;
   }
 
   async getEnhancedDashboardStats() {

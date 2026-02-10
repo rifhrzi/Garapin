@@ -125,6 +125,22 @@ export const updateStatusSchema = z.object({
   status: z.enum(['IN_PROGRESS', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'CANCELLED']),
 });
 
+// Payout
+export const requestPayoutSchema = z.object({
+  amount: z.number().positive('Amount must be greater than zero'),
+});
+
+export const updateBankDetailsSchema = z.object({
+  bankCode: z.string().min(2).max(20),
+  bankName: z.string().min(2).max(100),
+  accountNumber: z.string().min(5).max(30),
+  accountHolderName: z.string().min(2).max(150),
+});
+
+export const failPayoutSchema = z.object({
+  reason: z.string().min(5).max(500),
+});
+
 // Admin
 export const suspendUserSchema = z.object({
   reason: z.string().min(5).max(500),

@@ -158,19 +158,10 @@ export class EscrowService {
       throw new AppError('Work must be delivered before release', 400);
     }
 
-    // Use interactive transaction to ensure atomicity:
-    // payout creation + escrow update + project update all succeed or all fail.
+    // Release escrow and complete project atomically.
+    // Funds become available for freelancer to request withdrawal.
     const result = await prisma.$transaction(async (tx) => {
-      const payout = await tx.payout.create({
-        data: {
-          escrowId: escrow.id,
-          freelancerId: escrow.freelancerId,
-          amount: escrow.freelancerAmount,
-          status: 'PENDING',
-        },
-      });
-
-      await tx.escrow.update({
+      const updatedEscrow = await tx.escrow.update({
         where: { id: escrow.id },
         data: { status: 'RELEASED', releasedAt: new Date() },
       });
@@ -180,7 +171,7 @@ export class EscrowService {
         data: { status: 'COMPLETED' },
       });
 
-      return { escrow, payout };
+      return { escrow: updatedEscrow };
     });
 
     // Recalculate freelancer tier after project completion (outside transaction - non-critical)
@@ -218,7 +209,7 @@ export class EscrowService {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     // Use database aggregation instead of loading all records into memory
-    const [totalEarnedAgg, inEscrowAgg, thisMonthAgg, escrows, payouts] = await Promise.all([
+    const [totalEarnedAgg, inEscrowAgg, thisMonthAgg, payoutsAgg, escrows, payouts] = await Promise.all([
       // Total earned (released escrows)
       prisma.escrow.aggregate({
         where: { freelancerId, status: 'RELEASED' },
@@ -234,6 +225,14 @@ export class EscrowService {
         where: { freelancerId, status: 'RELEASED', releasedAt: { gte: startOfMonth } },
         _sum: { freelancerAmount: true },
       }),
+      // Total payouts requested (non-failed) — deducted from available
+      prisma.payout.aggregate({
+        where: {
+          freelancerId,
+          status: { in: ['PENDING', 'PROCESSING', 'COMPLETED'] },
+        },
+        _sum: { amount: true },
+      }),
       // Escrow list for detail view
       prisma.escrow.findMany({
         where: { freelancerId },
@@ -245,13 +244,6 @@ export class EscrowService {
       // Payout history
       prisma.payout.findMany({
         where: { freelancerId },
-        include: {
-          escrow: {
-            select: {
-              project: { select: { id: true, title: true } },
-            },
-          },
-        },
         orderBy: { createdAt: 'desc' },
       }),
     ]);
@@ -259,22 +251,29 @@ export class EscrowService {
     const totalEarned = Number(totalEarnedAgg._sum.freelancerAmount ?? 0);
     const inEscrow = Number(inEscrowAgg._sum.freelancerAmount ?? 0);
     const thisMonth = Number(thisMonthAgg._sum.freelancerAmount ?? 0);
+    const totalPayouts = Number(payoutsAgg._sum.amount ?? 0);
+    const available = Math.max(0, totalEarned - totalPayouts);
 
     return {
       summary: {
         totalEarned,
         inEscrow,
-        available: totalEarned, // In MVP, all released funds are "available"
+        available,
         thisMonth,
+        pendingPayout: totalPayouts,
       },
       payouts: payouts.map((p) => ({
         id: p.id,
         amount: Number(p.amount),
         status: p.status,
         bankCode: p.bankCode,
+        bankName: p.bankName,
         accountNumber: p.accountNumber,
-        projectTitle: p.escrow.project.title,
-        projectId: p.escrow.project.id,
+        accountHolderName: p.accountHolderName,
+        notes: p.notes,
+        failedReason: p.failedReason,
+        processedAt: p.processedAt,
+        completedAt: p.completedAt,
         createdAt: p.createdAt,
       })),
       escrows: escrows.map((e) => ({

@@ -4,7 +4,8 @@ import { disputeController } from '../controllers/dispute.controller';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/rbac';
 import { validate } from '../middleware/validator';
-import { suspendUserSchema, tierAdjustSchema, resolveDisputeSchema } from '../validators/schemas';
+import { validateUUID } from '../middleware/validateParam';
+import { suspendUserSchema, tierAdjustSchema, resolveDisputeSchema, failPayoutSchema } from '../validators/schemas';
 
 const router = Router();
 
@@ -25,6 +26,15 @@ router.get('/escrows', (req, res, next) =>
 );
 router.get('/payouts', (req, res, next) =>
   adminController.listPayouts(req, res, next)
+);
+router.put('/payouts/:id/process', validateUUID('id'), (req, res, next) =>
+  adminController.processPayout(req, res, next)
+);
+router.put('/payouts/:id/complete', validateUUID('id'), (req, res, next) =>
+  adminController.completePayout(req, res, next)
+);
+router.put('/payouts/:id/fail', validateUUID('id'), validate(failPayoutSchema), (req, res, next) =>
+  adminController.failPayout(req, res, next)
 );
 router.get('/activity-log', (req, res, next) =>
   adminController.activityLog(req, res, next)

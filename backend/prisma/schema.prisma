@@ -124,6 +124,7 @@ model User {
   escrowsAsClient   Escrow[]           @relation("EscrowClient")
   escrowsAsFreelancer Escrow[]         @relation("EscrowFreelancer")
   payouts           Payout[]
+  payoutsProcessed  Payout[]         @relation("PayoutAdmin")
   deliveries        Delivery[]       @relation("FreelancerDeliveries")
 
   @@map("users")
@@ -143,6 +144,10 @@ model FreelancerProfile {
   completionRate    Float         @default(100) @map("completion_rate")
   disputeRate       Float         @default(0) @map("dispute_rate")
   responseTimeAvg   Float         @default(0) @map("response_time_avg")
+  bankCode          String?       @map("bank_code")
+  bankName          String?       @map("bank_name")
+  accountNumber     String?       @map("account_number")
+  accountHolderName String?       @map("account_holder_name")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
 
@@ -277,22 +282,30 @@ model Escrow {
 
 model Payout {
   id                    String       @id @default(uuid())
-  escrowId              String       @map("escrow_id")
+  escrowId              String?      @map("escrow_id")
   freelancerId          String       @map("freelancer_id")
   amount                Decimal      @db.Decimal(12, 2)
   midtransPayoutId      String?      @map("midtrans_payout_id")
   status                PayoutStatus @default(PENDING)
   bankCode              String?      @map("bank_code")
+  bankName              String?      @map("bank_name")
   accountNumber         String?      @map("account_number")
   accountHolderName     String?      @map("account_holder_name")
+  notes                 String?
+  processedBy           String?      @map("processed_by")
+  processedAt           DateTime?    @map("processed_at")
+  completedAt           DateTime?    @map("completed_at")
+  failedReason          String?      @map("failed_reason")
   createdAt             DateTime     @default(now()) @map("created_at")
   updatedAt             DateTime     @updatedAt @map("updated_at")
 
-  escrow     Escrow @relation(fields: [escrowId], references: [id])
-  freelancer User   @relation(fields: [freelancerId], references: [id])
+  escrow     Escrow? @relation(fields: [escrowId], references: [id])
+  freelancer User    @relation(fields: [freelancerId], references: [id])
+  processedByAdmin User? @relation("PayoutAdmin", fields: [processedBy], references: [id])
 
   @@index([escrowId])
   @@index([freelancerId])
+  @@index([status])
   @@map("payouts")
 }
 

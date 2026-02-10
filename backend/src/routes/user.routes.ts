@@ -3,7 +3,7 @@ import { userController } from '../controllers/user.controller';
 import { authenticate } from '../middleware/auth';
 import { authorize } from '../middleware/rbac';
 import { validate } from '../middleware/validator';
-import { updateProfileSchema, updatePortfolioSchema } from '../validators/schemas';
+import { updateProfileSchema, updatePortfolioSchema, updateBankDetailsSchema } from '../validators/schemas';
 
 const router = Router();
 
@@ -25,6 +25,19 @@ router.put(
   authorize('FREELANCER'),
   validate(updatePortfolioSchema),
   (req, res, next) => userController.updatePortfolio(req, res, next)
+);
+router.get(
+  '/bank-details',
+  authenticate,
+  authorize('FREELANCER'),
+  (req, res, next) => userController.getBankDetails(req, res, next)
+);
+router.put(
+  '/bank-details',
+  authenticate,
+  authorize('FREELANCER'),
+  validate(updateBankDetailsSchema),
+  (req, res, next) => userController.updateBankDetails(req, res, next)
 );
 
 export default router;

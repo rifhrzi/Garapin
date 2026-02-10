@@ -100,6 +100,46 @@ export class UserService {
     return profile;
   }
 
+  async updateBankDetails(userId: string, input: {
+    bankCode: string;
+    bankName: string;
+    accountNumber: string;
+    accountHolderName: string;
+  }) {
+    const profile = await prisma.freelancerProfile.findUnique({ where: { userId } });
+    if (!profile) throw new NotFoundError('Freelancer profile');
+
+    return prisma.freelancerProfile.update({
+      where: { userId },
+      data: {
+        bankCode: input.bankCode,
+        bankName: input.bankName,
+        accountNumber: input.accountNumber,
+        accountHolderName: input.accountHolderName,
+      },
+      select: {
+        bankCode: true,
+        bankName: true,
+        accountNumber: true,
+        accountHolderName: true,
+      },
+    });
+  }
+
+  async getBankDetails(userId: string) {
+    const profile = await prisma.freelancerProfile.findUnique({
+      where: { userId },
+      select: {
+        bankCode: true,
+        bankName: true,
+        accountNumber: true,
+        accountHolderName: true,
+      },
+    });
+    if (!profile) throw new NotFoundError('Freelancer profile');
+    return profile;
+  }
+
   async searchFreelancers(filters: {
     tier?: string;
     search?: string;
