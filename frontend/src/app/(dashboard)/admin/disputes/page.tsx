@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -29,11 +29,11 @@ import {
   AlertTriangle,
   Loader2,
   CheckCircle2,
-  Clock,
   User,
   Briefcase,
   Scale,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 function getDisputeStatusColor(status: string) {
   const map: Record<string, string> = {
@@ -100,10 +100,9 @@ export default function AdminDisputesPage() {
       setResolution("");
       setOutcome("");
       fetchDisputes();
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to resolve dispute",
-      );
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to resolve dispute");
     } finally {
       setIsResolving(false);
     }

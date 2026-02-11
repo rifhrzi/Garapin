@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -102,11 +103,13 @@ export function MessageBubble({ message, isOwn }: MessageBubbleProps) {
                 <a
                   href={message.fileUrl}
                   target="_blank"
-                  rel="noopener noreferrer">
-                  <img
+                  rel="noopener noreferrer"
+                  className="block relative w-full max-w-full h-64">
+                  <Image
                     src={message.fileUrl}
                     alt={message.content}
-                    className="max-w-full rounded-lg max-h-64 object-cover"
+                    fill
+                    className="rounded-lg object-cover"
                   />
                 </a>
               ) : (

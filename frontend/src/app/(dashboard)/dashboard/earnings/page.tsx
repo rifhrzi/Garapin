@@ -29,20 +29,19 @@ import {
   DollarSign,
   TrendingUp,
   Clock,
-  CreditCard,
   Loader2,
   ArrowUpRight,
   Lock,
   Building2,
   Pencil,
   Send,
-  X,
   Wallet,
   AlertCircle,
   CheckCircle2,
   XCircle,
   Ban,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 // ─── Status badge helper ─────────────────────────────────
 function getPayoutStatusBadge(status: PayoutStatus) {
@@ -277,10 +276,9 @@ function RequestPayoutDialog({
       toast.success("Payout requested successfully");
       setOpen(false);
       onSuccess();
-    } catch (err: any) {
-      const msg =
-        err?.response?.data?.message || "Failed to request payout";
-      toast.error(msg);
+    } catch (err) {
+      const msg = err instanceof AxiosError ? err.response?.data?.message : undefined;
+      toast.error(msg || "Failed to request payout");
     } finally {
       setSubmitting(false);
     }

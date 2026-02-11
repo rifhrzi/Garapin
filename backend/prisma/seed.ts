@@ -32,20 +32,25 @@ async function main() {
   }
   console.log(`Seeded ${categories.length} categories`);
 
-  // Seed admin user
-  const adminPasswordHash = await bcrypt.hash('admin123456', 12);
-  await prisma.user.upsert({
-    where: { email: 'admin@platformjoki.com' },
-    update: {},
-    create: {
-      email: 'admin@platformjoki.com',
-      passwordHash: adminPasswordHash,
-      role: 'ADMIN',
-      emailVerified: true,
-      phoneVerified: true,
-    },
-  });
-  console.log('Seeded admin user (admin@platformjoki.com / admin123456)');
+  // Seed admin user — password from env to avoid hardcoded secrets
+  const adminPassword = process.env.ADMIN_SEED_PASSWORD;
+  if (!adminPassword) {
+    console.warn('ADMIN_SEED_PASSWORD not set — skipping admin user seed');
+  } else {
+    const adminPasswordHash = await bcrypt.hash(adminPassword, 12);
+    await prisma.user.upsert({
+      where: { email: 'admin@platformjoki.com' },
+      update: {},
+      create: {
+        email: 'admin@platformjoki.com',
+        passwordHash: adminPasswordHash,
+        role: 'ADMIN',
+        emailVerified: true,
+        phoneVerified: true,
+      },
+    });
+    console.log('Seeded admin user (admin@platformjoki.com)');
+  }
 
   console.log('Seeding complete!');
 }

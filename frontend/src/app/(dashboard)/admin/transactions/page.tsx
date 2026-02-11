@@ -114,7 +114,7 @@ function EscrowsTab() {
   const fetchEscrows = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: Record<string, any> = { page, limit };
+      const params: Record<string, string | number> = { page, limit };
       if (statusFilter !== "all") params.status = statusFilter;
       const result = await adminApi.listEscrows(params);
       setEscrows(result.data);
@@ -302,7 +302,7 @@ function PayoutsTab() {
   const fetchPayouts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: Record<string, any> = { page, limit };
+      const params: Record<string, string | number> = { page, limit };
       if (statusFilter !== "all") params.status = statusFilter;
       const result = await adminApi.listPayouts(params);
       setPayouts(result.data);

@@ -1,14 +1,14 @@
 import { Router } from 'express';
-import authRoutes from './auth.routes';
-import userRoutes from './user.routes';
-import projectRoutes from './project.routes';
-import bidRoutes from './bid.routes';
-import escrowRoutes from './escrow.routes';
-import payoutRoutes from './payout.routes';
-import chatRoutes from './chat.routes';
-import reviewRoutes from './review.routes';
-import disputeRoutes from './dispute.routes';
-import adminRoutes from './admin.routes';
+import authRoutes from '../modules/auth/auth.routes';
+import userRoutes from '../modules/user/user.routes';
+import projectRoutes from '../modules/project/project.routes';
+import bidRoutes from '../modules/bid/bid.routes';
+import escrowRoutes from '../modules/escrow/escrow.routes';
+import payoutRoutes from '../modules/payout/payout.routes';
+import chatRoutes from '../modules/chat/chat.routes';
+import reviewRoutes from '../modules/review/review.routes';
+import disputeRoutes from '../modules/dispute/dispute.routes';
+import adminRoutes from '../modules/admin/admin.routes';
 
 const router = Router();
 

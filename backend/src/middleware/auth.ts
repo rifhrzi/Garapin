@@ -3,10 +3,20 @@ import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 import { UnauthorizedError } from '../utils/errors';
 
+export type Role = 'CLIENT' | 'FREELANCER' | 'ADMIN';
+
 export interface JwtPayload {
   userId: string;
   email: string;
-  role: 'CLIENT' | 'FREELANCER' | 'ADMIN';
+  role: Role;
+}
+
+/**
+ * Express Request with a guaranteed `user` property.
+ * Use this type in controller handlers that sit behind the `authenticate` middleware.
+ */
+export interface AuthenticatedRequest extends Request {
+  user: JwtPayload;
 }
 
 declare global {

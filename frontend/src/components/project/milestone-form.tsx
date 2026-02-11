@@ -11,10 +11,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Plus, Trash2 } from "lucide-react";
+import type { CreateProjectValues } from "@/schemas/project.schema";
 
 interface MilestoneFormProps {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  control: Control<any>;
+  control: Control<CreateProjectValues>;
 }
 
 export function MilestoneForm({ control }: MilestoneFormProps) {

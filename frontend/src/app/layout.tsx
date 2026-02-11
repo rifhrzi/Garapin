@@ -46,10 +46,20 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id">
+    <html lang="id" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://mkvshcctlirkajddfhnu.supabase.co" />
-        <link rel="dns-prefetch" href="https://mkvshcctlirkajddfhnu.supabase.co" />
+        {process.env.NEXT_PUBLIC_SUPABASE_URL && (
+          <>
+            <link
+              rel="preconnect"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+            />
+            <link
+              rel="dns-prefetch"
+              href={process.env.NEXT_PUBLIC_SUPABASE_URL}
+            />
+          </>
+        )}
         <link rel="dns-prefetch" href="https://app.sandbox.midtrans.com" />
         <Script
           src={midtransSnapUrl}

@@ -10,7 +10,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,6 +22,7 @@ import {
 import { disputeApi } from "@/lib/api";
 import { toast } from "sonner";
 import { AlertTriangle, Loader2 } from "lucide-react";
+import { AxiosError } from "axios";
 
 interface DisputeDialogProps {
   projectId: string;
@@ -71,8 +71,9 @@ export function DisputeDialog({
       setReason("");
       setDescription("");
       onSuccess?.();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to file dispute");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to file dispute");
     } finally {
       setIsSubmitting(false);
     }

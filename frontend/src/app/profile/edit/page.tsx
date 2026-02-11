@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
+import { profileSchema, portfolioSchema, type ProfileForm, type PortfolioForm } from "@/schemas/user.schema";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { authApi, userApi } from "@/lib/api";
@@ -31,39 +31,12 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { Loader2, Plus, Trash2, Save } from "lucide-react";
 import { getTierLabel, getTierColor } from "@/types/user";
-import type { FreelancerTier, User, PortfolioLink } from "@/types/user";
+import type { FreelancerTier, PortfolioLink, MeResponse } from "@/types";
 import { AxiosError } from "axios";
-
-const profileSchema = z.object({
-  displayName: z.string().min(2, "Name must be at least 2 characters").max(100),
-  bio: z.string().max(1000).optional(),
-  avatarUrl: z.string().url("Must be a valid URL").or(z.literal("")).optional(),
-  companyName: z.string().max(200).optional(),
-});
-
-const portfolioSchema = z.object({
-  links: z.array(
-    z.object({
-      type: z.enum([
-        "github",
-        "behance",
-        "dribbble",
-        "drive",
-        "website",
-        "other",
-      ]),
-      url: z.string().url("Must be a valid URL"),
-      label: z.string().max(100),
-    }),
-  ),
-});
-
-type ProfileForm = z.infer<typeof profileSchema>;
-type PortfolioForm = z.infer<typeof portfolioSchema>;
 
 function EditProfileContent() {
   const { user, setUser } = useAuthStore();
-  const [fullProfile, setFullProfile] = useState<User | null>(null);
+  const [fullProfile, setFullProfile] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingPortfolio, setSavingPortfolio] = useState(false);
@@ -93,11 +66,10 @@ function EditProfileContent() {
       if (!user) return;
       try {
         const me = await authApi.me();
-        const profile = me as unknown as User;
-        setFullProfile(profile);
+        setFullProfile(me);
 
-        const fp = profile.freelancerProfile;
-        const cp = profile.clientProfile;
+        const fp = me.freelancerProfile;
+        const cp = me.clientProfile;
 
         profileForm.reset({
           displayName: fp?.displayName || cp?.displayName || "",

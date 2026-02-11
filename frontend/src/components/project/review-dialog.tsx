@@ -16,6 +16,7 @@ import { reviewApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Star, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { AxiosError } from "axios";
 
 interface ReviewDialogProps {
   projectId: string;
@@ -57,8 +58,9 @@ export function ReviewDialog({
       setRating(0);
       setComment("");
       onSuccess?.();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to submit review");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to submit review");
     } finally {
       setIsSubmitting(false);
     }

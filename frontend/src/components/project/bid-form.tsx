@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { bidFormSchema, type BidFormValues } from "@/schemas/bid.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,17 +19,8 @@ import {
 import { bidApi } from "@/lib/api";
 import { toast } from "sonner";
 import { Gavel, Loader2 } from "lucide-react";
+import { AxiosError } from "axios";
 
-const bidFormSchema = z.object({
-  amount: z.number().positive("Amount must be positive"),
-  estimatedDays: z.number().int().positive("Must be at least 1 day").max(365),
-  proposal: z
-    .string()
-    .min(20, "Proposal must be at least 20 characters")
-    .max(3000),
-});
-
-type BidFormValues = z.infer<typeof bidFormSchema>;
 
 interface BidFormProps {
   projectId: string;
@@ -62,9 +53,9 @@ export function BidForm({
       toast.success("Bid submitted successfully!");
       form.reset();
       onSuccess?.();
-    } catch (error: any) {
-      const message = error?.response?.data?.message || "Failed to submit bid";
-      toast.error(message);
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to submit bid");
     } finally {
       setIsSubmitting(false);
     }

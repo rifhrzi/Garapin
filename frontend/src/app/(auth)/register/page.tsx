@@ -2,10 +2,10 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
+import { registerSchema, type RegisterForm } from "@/schemas/auth.schema";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,28 +31,6 @@ import { Briefcase, Loader2, User, Code } from "lucide-react";
 import { AxiosError } from "axios";
 import { Suspense } from "react";
 
-const registerSchema = z
-  .object({
-    role: z.enum(["CLIENT", "FREELANCER"]),
-    email: z.string().email("Please enter a valid email"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-    displayName: z
-      .string()
-      .min(2, "Name must be at least 2 characters")
-      .max(100),
-    phone: z.string().optional(),
-    companyName: z.string().optional(),
-    acceptTerms: z.literal(true, {
-      message: "You must accept the Terms & Conditions",
-    }),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type RegisterForm = z.infer<typeof registerSchema>;
 
 function RegisterForm_() {
   const router = useRouter();
@@ -73,11 +51,11 @@ function RegisterForm_() {
       displayName: "",
       phone: "",
       companyName: "",
-      acceptTerms: undefined as unknown as true,
+      acceptTerms: false,
     },
   });
 
-  const selectedRole = form.watch("role");
+  const selectedRole = useWatch({ control: form.control, name: "role", defaultValue: defaultRole });
 
   async function onSubmit(values: RegisterForm) {
     try {
@@ -265,7 +243,7 @@ function RegisterForm_() {
                     <Checkbox
                       checked={field.value === true}
                       onCheckedChange={(checked) =>
-                        field.onChange(checked === true ? true : undefined)
+                        field.onChange(checked === true)
                       }
                     />
                   </FormControl>

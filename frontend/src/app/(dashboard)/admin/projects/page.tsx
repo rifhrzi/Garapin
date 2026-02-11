@@ -86,7 +86,7 @@ export default function AdminProjectsPage() {
   const fetchProjects = useCallback(async () => {
     setIsLoading(true);
     try {
-      const params: Record<string, any> = { page, limit };
+      const params: Record<string, string | number> = { page, limit };
       if (activeTab !== "all") params.status = activeTab;
       if (categoryFilter !== "all") params.categoryId = categoryFilter;
       if (typeFilter !== "all") params.type = typeFilter;

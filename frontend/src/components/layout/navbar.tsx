@@ -52,17 +52,18 @@ export function Navbar() {
     router.push("/");
   }, [logout, router]);
 
+  const displayName = user?.displayName;
   const initials = useMemo(
     () =>
-      user?.displayName
-        ? user.displayName
+      displayName
+        ? displayName
             .split(" ")
             .map((n) => n[0])
             .join("")
             .toUpperCase()
             .slice(0, 2)
         : "??",
-    [user?.displayName],
+    [displayName],
   );
 
   const roleBadge = useMemo(

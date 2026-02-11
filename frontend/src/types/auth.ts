@@ -34,4 +34,4 @@ export interface TokenResponse {
   refreshToken: string;
 }
 
-export interface MeResponse extends Omit<User, 'passwordHash'> { }
+export type MeResponse = Omit<User, 'passwordHash'>;

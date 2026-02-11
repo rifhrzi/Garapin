@@ -5,7 +5,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { adminApi } from "@/lib/api";
@@ -18,7 +17,6 @@ import { toast } from "sonner";
 import {
   MessageSquare,
   Loader2,
-  AlertTriangle,
   Search,
   Shield,
   Flag,
@@ -60,7 +58,6 @@ export default function AdminChatAuditPage() {
   const [flagsTotal, setFlagsTotal] = useState(0);
 
   // Chat audit state
-  const [conversationId, setConversationId] = useState("");
   const [searchInput, setSearchInput] = useState("");
   const [conversation, setConversation] =
     useState<ChatAuditConversation | null>(null);
@@ -91,7 +88,6 @@ export default function AdminChatAuditPage() {
     try {
       const data = await adminApi.getChatAudit(id);
       setConversation(data);
-      setConversationId(id);
     } catch {
       toast.error("Conversation not found");
     } finally {

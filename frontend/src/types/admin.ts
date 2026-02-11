@@ -275,7 +275,7 @@ export interface AdminActionLog {
   actionType: string;
   targetType: string;
   targetId: string;
-  details: Record<string, any> | null;
+  details: Record<string, unknown> | null;
   createdAt: string;
   admin: {
     id: string;
@@ -346,7 +346,7 @@ export interface EnhancedDashboardStats extends DashboardStats {
     actionType: string;
     targetType: string;
     targetId: string;
-    details: Record<string, any> | null;
+    details: Record<string, unknown> | null;
     createdAt: string;
     admin: { id: string; email: string };
   }>;

@@ -28,7 +28,6 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
-  ExternalLink,
   Gavel,
   Loader2,
   Lock,
@@ -159,7 +158,7 @@ export default function ProjectDetailPage() {
     checkStatus();
     const interval = setInterval(checkStatus, 10000);
     return () => clearInterval(interval);
-  }, [escrow?.id, escrow?.status, fetchEscrow, fetchProject]);
+  }, [escrow, fetchEscrow, fetchProject]);
 
   async function handleStatusUpdate(status: ProjectStatus) {
     if (!project) return;
@@ -180,11 +179,11 @@ export default function ProjectDetailPage() {
   }
 
   function openSnapPayment(token: string) {
-    if (!(window as unknown as { snap?: { pay: (token: string, options: Record<string, unknown>) => void } }).snap) {
+    if (!window.snap) {
       toast.error("Payment system is loading, please try again in a moment.");
       return;
     }
-    (window as unknown as { snap: { pay: (token: string, options: Record<string, unknown>) => void } }).snap.pay(token, {
+    window.snap.pay(token, {
       onSuccess: () => {
         toast.success("Payment successful!");
         fetchEscrow();

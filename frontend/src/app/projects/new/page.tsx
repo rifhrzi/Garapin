@@ -4,8 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { createProjectSchema, type CreateProjectValues } from "@/schemas/project.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Separator } from "@/components/ui/separator";
 import { MilestoneForm } from "@/components/project/milestone-form";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { projectApi } from "@/lib/api";
@@ -34,33 +33,8 @@ import { formatRupiah } from "@/types/project";
 import type { Category } from "@/types";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Plus } from "lucide-react";
+import { AxiosError } from "axios";
 
-const createProjectSchema = z.object({
-  title: z
-    .string()
-    .min(5, "Title must be at least 5 characters")
-    .max(200, "Title must be under 200 characters"),
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters")
-    .max(5000),
-  categoryId: z.string().min(1, "Please select a category"),
-  type: z.enum(["QUICK_TASK", "WEEKLY_PROJECT"]),
-  budgetMin: z.number().positive("Budget must be positive"),
-  budgetMax: z.number().positive("Budget must be positive"),
-  deadline: z.string().min(1, "Please select a deadline"),
-  milestones: z
-    .array(
-      z.object({
-        title: z.string().min(2, "Milestone title required"),
-        amount: z.number().positive("Amount must be positive"),
-        dueDate: z.string().optional(),
-      }),
-    )
-    .optional(),
-});
-
-type CreateProjectValues = z.infer<typeof createProjectSchema>;
 
 function CreateProjectContent() {
   const router = useRouter();
@@ -132,10 +106,9 @@ function CreateProjectContent() {
       const project = await projectApi.create(payload);
       toast.success("Project created successfully!");
       router.push(`/projects/${project.id}`);
-    } catch (error: any) {
-      const message =
-        error?.response?.data?.message || "Failed to create project";
-      toast.error(message);
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to create project");
     } finally {
       setIsSubmitting(false);
     }

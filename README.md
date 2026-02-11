@@ -1,75 +1,129 @@
-# Platform Joki - Indonesia Freelance Marketplace
+# Platform Joki (Garapin)
 
-A local (Indonesia-first) freelance marketplace platform where clients post projects, freelancers bid, and the platform acts as escrow holder, mediator, and quality controller.
+Indonesia Freelance Marketplace with escrow payments, tier-based freelancer progression, real-time chat, and admin moderation.
 
 ## Tech Stack
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 14 (App Router) + Tailwind CSS + Shadcn/UI |
-| Backend | Express.js + TypeScript |
-| Database | PostgreSQL (Supabase) |
-| ORM | Prisma |
-| Payments | Xendit (Invoice + Disbursement) |
-| Storage | Supabase Storage |
-| Real-time | Supabase Realtime |
-| Deployment | Vercel (frontend) + Railway (backend) |
+| Layer    | Technology                                                                |
+| -------- | ------------------------------------------------------------------------- |
+| Frontend | Next.js (App Router), React, TypeScript, Tailwind CSS, shadcn/ui, Zustand |
+| Backend  | Node.js, Express, TypeScript, Prisma ORM                                  |
+| Database | PostgreSQL (Supabase)                                                     |
+| Payments | Midtrans (Snap)                                                           |
+| Realtime | Supabase Realtime                                                         |
+| Storage  | Supabase Storage                                                          |
 
 ## Project Structure
 
 ```
 platform-joki/
-├── frontend/          # Next.js 14 application
-├── backend/           # Express.js API server
-│   ├── prisma/        # Database schema & migrations
-│   └── src/           # Application source code
-└── README.md
+  backend/          # Express API server
+    prisma/         # Schema, migrations, seed
+    src/
+      config/       # Env validation (Zod), DB, CORS
+      middleware/    # Auth, RBAC, validation, error handler, rate limiter
+      modules/      # Domain modules (auth, user, project, bid, chat, escrow, payout, dispute, review, admin)
+      services/     # Cross-cutting services (Midtrans, tier)
+      utils/        # Response helpers, errors, logger, pagination, storage
+      jobs/         # Cron jobs (auto-dispute)
+      routes/       # Route aggregator
+      app.ts        # Express app setup
+      index.ts      # Server bootstrap + graceful shutdown
+  frontend/         # Next.js web app
+    src/
+      app/          # App Router pages + layouts
+      components/   # UI components (shadcn, layout, auth, chat, project)
+      lib/          # API client (per-domain), Supabase, utils, constants
+      stores/       # Zustand state (auth)
+      schemas/      # Zod form validation schemas
+      hooks/        # Custom hooks (realtime messages)
+      types/        # TypeScript type definitions
 ```
 
-## Getting Started
+## Local Development Setup
 
 ### Prerequisites
 
-- Node.js 18+
-- npm or yarn
-- Supabase account (for PostgreSQL + Storage + Realtime)
-- Xendit account (for payments)
+- Node.js >= 18
+- PostgreSQL (or Supabase project)
+- Midtrans sandbox account (for payments)
 
-### Backend Setup
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd platform-joki
+
+# Backend
+cd backend
+cp .env.example .env
+npm install
+npx prisma generate
+
+# Frontend
+cd ../frontend
+cp .env.example .env.local
+npm install
+```
+
+### 2. Configure environment
+
+Edit `backend/.env` and `frontend/.env.local` with your credentials. See each `.env.example` for documentation on every variable.
+
+### 3. Setup database
 
 ```bash
 cd backend
-cp .env.example .env    # Fill in your environment variables
-npm install
-npx prisma generate
-npx prisma db push      # Push schema to database
-npx prisma db seed      # Seed categories
-npm run dev
+npx prisma db push          # Apply schema to DB
+ADMIN_SEED_PASSWORD=your-password npx prisma db seed   # Seed categories + admin user
 ```
 
-### Frontend Setup
+### 4. Run development servers
 
 ```bash
+# Terminal 1 - Backend (port 4000)
+cd backend
+npm run dev
+
+# Terminal 2 - Frontend (port 3000)
 cd frontend
-cp .env.example .env.local   # Fill in your environment variables
-npm install
 npm run dev
 ```
 
-The frontend runs on `http://localhost:3000` and the backend API on `http://localhost:4000`.
+## Available Scripts
 
-## User Roles
+### Backend (`backend/`)
 
-- **Client** - Posts projects, selects freelancers, manages escrow
-- **Freelancer** - Browses projects, submits bids, delivers work
-- **Admin** - Manages disputes, audits chat, controls user tiers
+| Script                    | Description                                          |
+| ------------------------- | ---------------------------------------------------- |
+| `npm run dev`             | Start dev server with hot reload (nodemon + ts-node) |
+| `npm run build`           | Compile TypeScript to `dist/`                        |
+| `npm start`               | Start production server from `dist/`                 |
+| `npm run prisma:generate` | Generate Prisma client                               |
+| `npm run prisma:migrate`  | Run migrations (dev)                                 |
+| `npm run prisma:seed`     | Seed database                                        |
+| `npm run prisma:studio`   | Open Prisma Studio                                   |
 
-## Freelancer Tiers
+### Frontend (`frontend/`)
 
-| Tier | Requirements |
-|------|-------------|
-| Bronze Crafter | Default (new freelancer) |
-| Silver Builder | 5+ projects, 4.0+ rating, 80%+ completion |
-| Gold Specialist | 15+ projects, 4.3+ rating, 85%+ completion, <10% disputes |
-| Platinum Master | 30+ projects, 4.5+ rating, 90%+ completion, <5% disputes |
-| Legend Partner | 50+ projects, 4.7+ rating, 95%+ completion, <3% disputes |
+| Script          | Description              |
+| --------------- | ------------------------ |
+| `npm run dev`   | Start Next.js dev server |
+| `npm run build` | Production build         |
+| `npm start`     | Start production server  |
+| `npm run lint`  | Run ESLint               |
+
+## Quality Checks
+
+```bash
+# Backend
+cd backend
+npx prisma generate
+npx tsc --noEmit
+
+# Frontend
+cd frontend
+npx tsc --noEmit
+npm run lint
+npm run build
+```

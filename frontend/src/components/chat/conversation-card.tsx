@@ -3,8 +3,7 @@
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { Lock, MessageSquare } from "lucide-react";
+import { Lock } from "lucide-react";
 import type { ConversationListItem } from "@/types/chat";
 
 interface ConversationCardProps {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/lib/stores/auth-store";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,35 +33,45 @@ const cache = new Map<string, { data: unknown; ts: number }>();
 const CACHE_TTL = 60_000; // 1 minute
 
 function useCachedFetch<T>(key: string, fetcher: () => Promise<T>) {
-  const [data, setData] = useState<T | null>(() => {
+  const hasCacheHit = () => {
     const hit = cache.get(key);
-    if (hit && Date.now() - hit.ts < CACHE_TTL) return hit.data as T;
-    return null;
-  });
+    return hit && Date.now() - hit.ts < CACHE_TTL ? (hit.data as T) : null;
+  };
+
+  const [data, setData] = useState<T | null>(hasCacheHit);
   const [isLoading, setIsLoading] = useState(!data);
   const fetcherRef = useRef(fetcher);
-  fetcherRef.current = fetcher;
 
   useEffect(() => {
-    const hit = cache.get(key);
-    if (hit && Date.now() - hit.ts < CACHE_TTL) {
-      setData(hit.data as T);
-      setIsLoading(false);
-      // Revalidate in background
+    fetcherRef.current = fetcher;
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    const cached = hasCacheHit();
+
+    if (cached) {
+      // Already have cached data from useState init - just revalidate in background
       fetcherRef.current().then((fresh) => {
+        if (cancelled) return;
         cache.set(key, { data: fresh, ts: Date.now() });
         setData(fresh);
       }).catch(() => {});
-      return;
+      return () => { cancelled = true; };
     }
+
     setIsLoading(true);
     fetcherRef.current()
       .then((result) => {
+        if (cancelled) return;
         cache.set(key, { data: result, ts: Date.now() });
         setData(result);
       })
       .catch(() => {})
-      .finally(() => setIsLoading(false));
+      .finally(() => { if (!cancelled) setIsLoading(false); });
+
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key]);
 
   return { data, isLoading };

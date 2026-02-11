@@ -4,7 +4,6 @@ import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -29,15 +28,13 @@ import { toast } from "sonner";
 import {
   Users,
   Loader2,
-  UserX,
-  UserCheck,
   Award,
   Star,
   Briefcase,
-  Shield,
   Ban,
   CheckCircle2,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 function getUserDisplayName(user: AdminUser): string {
   return (
@@ -93,8 +90,9 @@ export default function AdminUsersPage() {
       setSuspendTarget(null);
       setSuspendReason("");
       fetchUsers();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to suspend user");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to suspend user");
     } finally {
       setIsSuspending(false);
     }
@@ -105,8 +103,9 @@ export default function AdminUsersPage() {
       await adminApi.unsuspendUser(user.id);
       toast.success(`User ${getUserDisplayName(user)} unsuspended`);
       fetchUsers();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to unsuspend user");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to unsuspend user");
     }
   }
 
@@ -121,8 +120,9 @@ export default function AdminUsersPage() {
       setTierTarget(null);
       setNewTier("");
       fetchUsers();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to adjust tier");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to adjust tier");
     } finally {
       setIsAdjustingTier(false);
     }

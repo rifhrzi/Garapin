@@ -11,11 +11,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ProjectStatusBadge } from "@/components/project/project-status-badge";
 import { bidApi } from "@/lib/api";
 import { formatRupiah } from "@/types/project";
-import type { Bid, BidStatus } from "@/types";
+import type { Bid, ProjectStatus } from "@/types";
 import { toast } from "sonner";
 import {
   Calendar,
@@ -26,6 +25,7 @@ import {
   Tag,
   X,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 const BID_STATUS_TABS: Array<{ value: string; label: string }> = [
   { value: "ALL", label: "All" },
@@ -87,8 +87,9 @@ export default function MyBidsPage() {
       await bidApi.withdraw(bidId);
       toast.success("Bid withdrawn successfully");
       fetchBids();
-    } catch (error: any) {
-      toast.error(error?.response?.data?.message || "Failed to withdraw bid");
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to withdraw bid");
     } finally {
       setWithdrawingId(null);
     }
@@ -166,7 +167,7 @@ export default function MyBidsPage() {
                       )}
                       {bid.project?.status && (
                         <ProjectStatusBadge
-                          status={bid.project.status as any}
+                          status={bid.project.status as ProjectStatus}
                         />
                       )}
                     </div>

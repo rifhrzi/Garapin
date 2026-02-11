@@ -190,37 +190,21 @@ export interface Bid {
   };
 }
 
-export function formatRupiah(amount: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount);
+export interface Delivery {
+  id: string;
+  projectId: string;
+  freelancerId: string;
+  description: string;
+  fileUrl: string | null;
+  link: string | null;
+  report: string | null;
+  createdAt: string;
+  freelancer?: {
+    id: string;
+    freelancerProfile?: { displayName: string } | null;
+  };
 }
 
-export function getStatusColor(status: ProjectStatus): string {
-  const colors: Record<ProjectStatus, string> = {
-    DRAFT: 'bg-gray-100 text-gray-800',
-    OPEN: 'bg-green-100 text-green-800',
-    IN_PROGRESS: 'bg-blue-100 text-blue-800',
-    DELIVERED: 'bg-purple-100 text-purple-800',
-    COMPLETED: 'bg-emerald-100 text-emerald-800',
-    DISPUTED: 'bg-red-100 text-red-800',
-    CANCELLED: 'bg-gray-100 text-gray-500',
-  };
-  return colors[status];
-}
-
-export function getStatusLabel(status: ProjectStatus): string {
-  const labels: Record<ProjectStatus, string> = {
-    DRAFT: 'Draft',
-    OPEN: 'Open',
-    IN_PROGRESS: 'In Progress',
-    DELIVERED: 'Delivered',
-    COMPLETED: 'Completed',
-    DISPUTED: 'Disputed',
-    CANCELLED: 'Cancelled',
-  };
-  return labels[status];
-}
+// Re-export utility functions from their canonical location for backward compatibility.
+// New code should import from '@/lib/constants' instead.
+export { formatRupiah, getStatusColor, getStatusLabel } from '@/lib/constants';

@@ -2,8 +2,23 @@
 
 import { useEffect, useRef, useCallback, useState } from 'react';
 import { supabase } from '@/lib/supabase';
-import type { Message } from '@/types/chat';
+import type { Message, MessageSender } from '@/types/chat';
 import type { RealtimeChannel } from '@supabase/supabase-js';
+
+/** Raw DB row shape from Supabase postgres_changes INSERT on Message table */
+interface MessageRow {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  content: string;
+  originalContent?: string | null;
+  type: Message['type'];
+  fileUrl?: string | null;
+  wasFiltered: boolean;
+  filterReason?: string | null;
+  createdAt: string;
+  sender?: MessageSender | null;
+}
 
 export function useRealtimeMessages(
   conversationId: string | null,
@@ -11,15 +26,13 @@ export function useRealtimeMessages(
 ) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const channelRef = useRef<RealtimeChannel | null>(null);
-  const prevLengthRef = useRef(initialMessages.length);
 
-  // Sync initial messages when they actually change (avoid infinite loop from new [] reference)
-  useEffect(() => {
-    if (initialMessages.length > 0 && initialMessages.length !== prevLengthRef.current) {
-      prevLengthRef.current = initialMessages.length;
-      setMessages(initialMessages);
-    }
-  }, [initialMessages]);
+  // Sync initial messages when they change (React-recommended render-time state adjustment)
+  const [prevInitialLength, setPrevInitialLength] = useState(initialMessages.length);
+  if (initialMessages.length > 0 && initialMessages.length !== prevInitialLength) {
+    setPrevInitialLength(initialMessages.length);
+    setMessages(initialMessages);
+  }
 
   // Subscribe to realtime inserts on the messages table
   useEffect(() => {
@@ -41,7 +54,7 @@ export function useRealtimeMessages(
           // but for realtime we use a simpler approach: only add if
           // we don't already have this message (avoid duplicates from
           // optimistic updates).
-          const newMsg = payload.new as any;
+          const newMsg = payload.new as MessageRow;
           setMessages((prev) => {
             const exists = prev.some((m) => m.id === newMsg.id);
             if (exists) return prev;

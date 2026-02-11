@@ -20,7 +20,9 @@ import {
   AlertTriangle,
   Shield,
 } from "lucide-react";
+import { AxiosError } from "axios";
 import type { Conversation, Message } from "@/types/chat";
+import type { Role } from "@/types/user";
 
 export default function ChatRoomPage() {
   const params = useParams();
@@ -41,8 +43,9 @@ export default function ChatRoomPage() {
       try {
         const data = await chatApi.getConversation(projectId);
         setConversation(data);
-      } catch (err: any) {
-        setError(err?.response?.data?.message || "Failed to load conversation");
+      } catch (err) {
+        const message = err instanceof AxiosError ? err.response?.data?.message : undefined;
+        setError(message || "Failed to load conversation");
       } finally {
         setIsLoading(false);
       }
@@ -77,7 +80,7 @@ export default function ChatRoomPage() {
         createdAt: new Date().toISOString(),
         sender: {
           id: user.id,
-          role: user.role as any,
+          role: user.role as Role,
           freelancerProfile:
             user.role === "FREELANCER"
               ? { displayName: user.displayName, avatarUrl: null }
@@ -96,9 +99,9 @@ export default function ChatRoomPage() {
           type: "TEXT",
         });
         replaceMessage(tempId, realMessage);
-      } catch (err: any) {
-        const msg = err?.response?.data?.message || "Failed to send message";
-        toast.error(msg);
+      } catch (err) {
+        const msg = err instanceof AxiosError ? err.response?.data?.message : undefined;
+        toast.error(msg || "Failed to send message");
         // Remove optimistic message on error
         replaceMessage(tempId, {
           ...optimistic,
@@ -117,8 +120,9 @@ export default function ChatRoomPage() {
       try {
         await chatApi.uploadFile(file, conversation.id);
         toast.success("File uploaded");
-      } catch (err: any) {
-        toast.error(err?.response?.data?.message || "File upload failed");
+      } catch (err) {
+        const message = err instanceof AxiosError ? err.response?.data?.message : undefined;
+        toast.error(message || "File upload failed");
         throw err;
       }
     },

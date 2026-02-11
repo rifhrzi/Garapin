@@ -17,12 +17,12 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { getTierLabel, getTierColor } from "@/types/user";
-import type { User, FreelancerTier, Review } from "@/types/user";
+import type { PublicProfile, FreelancerTier } from "@/types/user";
 
 export default function PublicProfilePage() {
   const params = useParams();
   const userId = params.id as string;
-  const [profile, setProfile] = useState<User | null>(null);
+  const [profile, setProfile] = useState<PublicProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,7 +30,7 @@ export default function PublicProfilePage() {
     async function fetchProfile() {
       try {
         const data = await userApi.getProfile(userId);
-        setProfile(data as unknown as User);
+        setProfile(data);
       } catch {
         setError("Profile not found");
       } finally {
@@ -202,17 +202,13 @@ export default function PublicProfilePage() {
         )}
 
       {/* Reviews */}
-      {(profile as unknown as { reviewsReceived?: Review[] }).reviewsReceived &&
-        (profile as unknown as { reviewsReceived: Review[] }).reviewsReceived
-          .length > 0 && (
+      {profile.reviewsReceived && profile.reviewsReceived.length > 0 && (
           <Card className="mt-6">
             <CardHeader>
               <CardTitle className="text-lg">Recent Reviews</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {(
-                profile as unknown as { reviewsReceived: Review[] }
-              ).reviewsReceived.map((review) => (
+              {profile.reviewsReceived.map((review) => (
                 <div key={review.id}>
                   <div className="flex items-center gap-2 mb-1">
                     <div className="flex">

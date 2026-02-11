@@ -72,33 +72,6 @@ export interface Review {
   };
 }
 
-export function getDisplayName(user: User | null): string {
-  if (!user) return '';
-  return (
-    user.freelancerProfile?.displayName ||
-    user.clientProfile?.displayName ||
-    user.email
-  );
-}
-
-export function getTierLabel(tier: FreelancerTier): string {
-  const labels: Record<FreelancerTier, string> = {
-    BRONZE: 'Bronze Crafter',
-    SILVER: 'Silver Builder',
-    GOLD: 'Gold Specialist',
-    PLATINUM: 'Platinum Master',
-    LEGEND: 'Legend Partner',
-  };
-  return labels[tier];
-}
-
-export function getTierColor(tier: FreelancerTier): string {
-  const colors: Record<FreelancerTier, string> = {
-    BRONZE: 'bg-orange-100 text-orange-800 border-orange-300',
-    SILVER: 'bg-slate-100 text-slate-800 border-slate-300',
-    GOLD: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-    PLATINUM: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-    LEGEND: 'bg-purple-100 text-purple-800 border-purple-300',
-  };
-  return colors[tier];
-}
+// Re-export utility functions from their canonical location for backward compatibility.
+// New code should import from '@/lib/constants' instead.
+export { getDisplayName, getTierLabel, getTierColor } from '@/lib/constants';

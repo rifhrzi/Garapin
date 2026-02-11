@@ -23,6 +23,7 @@ import {
   Upload,
   X,
 } from "lucide-react";
+import { AxiosError } from "axios";
 
 interface DeliveryDialogProps {
   projectId: string;
@@ -103,10 +104,9 @@ export function DeliveryDialog({
       setOpen(false);
       resetForm();
       onSuccess?.();
-    } catch (error: any) {
-      toast.error(
-        error?.response?.data?.message || "Failed to deliver work"
-      );
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to deliver work");
     } finally {
       setIsSubmitting(false);
     }

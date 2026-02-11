@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Progress } from "@/components/ui/progress";
 import { adminApi } from "@/lib/api";
 import { formatRupiah } from "@/types/project";
 import type { EnhancedDashboardStats } from "@/types";
@@ -22,10 +21,8 @@ import {
   TrendingUp,
   BarChart3,
   Activity,
-  Clock,
   CheckCircle2,
   FolderOpen,
-  FileText,
   CreditCard,
   ClipboardList,
   UserPlus,

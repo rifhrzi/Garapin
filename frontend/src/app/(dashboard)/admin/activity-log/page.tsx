@@ -46,7 +46,7 @@ const ACTION_LABELS: Record<string, string> = {
 
 function formatActionDetails(action: AdminActionLog): string {
   if (!action.details) return "";
-  const details = action.details;
+  const details = action.details as Record<string, string | undefined>;
 
   if (action.actionType === "SUSPEND_USER" && details.reason) {
     return `Reason: ${details.reason}`;
