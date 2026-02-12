@@ -126,6 +126,28 @@ export class UserService {
     });
   }
 
+  async updateAccount(userId: string, input: { phone?: string | null }) {
+    const phone = input.phone === '' ? null : input.phone ?? undefined;
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+
+    const updates: { phone?: string | null; phoneVerified?: boolean } = {};
+    if (phone !== undefined) {
+      updates.phone = phone;
+      if (phone !== user.phone) {
+        updates.phoneVerified = false;
+      }
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: userId },
+      data: updates,
+      include: { freelancerProfile: true, clientProfile: true },
+    });
+    const { passwordHash, ...safeUser } = updated;
+    return safeUser;
+  }
+
   async getBankDetails(userId: string) {
     const profile = await prisma.freelancerProfile.findUnique({
       where: { userId },

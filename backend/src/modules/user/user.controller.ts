@@ -56,6 +56,16 @@ export class UserController {
     }
   }
 
+  async updateAccount(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      const result = await userService.updateAccount(user.userId, req.body);
+      sendSuccess(res, result, 'Account updated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async getBankDetails(req: Request, res: Response, next: NextFunction) {
     try {
       const { user } = req as AuthenticatedRequest;

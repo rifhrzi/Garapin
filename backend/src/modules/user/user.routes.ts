@@ -4,7 +4,12 @@ import { authenticate } from '../../middleware/auth';
 import { authorize } from '../../middleware/rbac';
 import { validate } from '../../middleware/validator';
 import { validateUUID } from '../../middleware/validateParam';
-import { updateProfileSchema, updatePortfolioSchema, updateBankDetailsSchema } from '../../validators/schemas';
+import {
+  updateProfileSchema,
+  updatePortfolioSchema,
+  updateBankDetailsSchema,
+  updateAccountSchema,
+} from '../../validators/schemas';
 
 const router = Router();
 
@@ -19,6 +24,12 @@ router.get('/:id/profile', validateUUID('id'), (req, res, next) =>
 );
 router.put('/profile', authenticate, validate(updateProfileSchema), (req, res, next) =>
   userController.updateProfile(req, res, next)
+);
+router.put(
+  '/account',
+  authenticate,
+  validate(updateAccountSchema),
+  (req, res, next) => userController.updateAccount(req, res, next)
 );
 router.put(
   '/freelancer/portfolio',

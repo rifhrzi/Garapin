@@ -24,6 +24,11 @@ export const userApi = {
     return data.data;
   },
 
+  async updateAccount(payload: { phone?: string | null }) {
+    const { data } = await api.put<ApiResponse<MeResponse>>('/users/account', payload);
+    return data.data;
+  },
+
   async updatePortfolio(portfolioLinks: PortfolioLink[]) {
     const { data } = await api.put<ApiResponse<unknown>>('/users/freelancer/portfolio', {
       portfolioLinks,

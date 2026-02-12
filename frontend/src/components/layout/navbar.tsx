@@ -23,6 +23,7 @@ import {
   Search,
   Shield,
   MessageSquare,
+  Settings,
 } from "lucide-react";
 import { useMemo, useState, useCallback } from "react";
 
@@ -158,6 +159,14 @@ export function Navbar() {
                       Edit Profile
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/settings"
+                      className="flex items-center gap-2 cursor-pointer">
+                      <Settings className="h-4 w-4" />
+                      Settings
+                    </Link>
+                  </DropdownMenuItem>
                   {user.role === "ADMIN" && (
                     <DropdownMenuItem asChild>
                       <Link
@@ -243,6 +252,13 @@ export function Navbar() {
                     className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent transition-colors">
                     <User className="h-4 w-4" />
                     Edit Profile
+                  </Link>
+                  <Link
+                    href="/settings"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium hover:bg-accent transition-colors">
+                    <Settings className="h-4 w-4" />
+                    Settings
                   </Link>
                   {user.role !== "ADMIN" && (
                     <Link

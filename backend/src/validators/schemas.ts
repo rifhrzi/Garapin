@@ -19,12 +19,21 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string(),
 });
 
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
 // Profile
 export const updateProfileSchema = z.object({
   displayName: z.string().min(2).max(100).optional(),
   bio: z.string().max(1000).optional(),
   avatarUrl: z.string().url().optional(),
   companyName: z.string().max(200).optional(),
+});
+
+export const updateAccountSchema = z.object({
+  phone: z.string().max(30).optional().nullable(),
 });
 
 export const updatePortfolioSchema = z.object({
