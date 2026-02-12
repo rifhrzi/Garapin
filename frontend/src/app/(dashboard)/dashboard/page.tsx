@@ -488,7 +488,7 @@ function AdminDashboard() {
                   {formatRupiah(stats?.revenue.platformRevenue ?? 0)}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  From 15% platform fee
+                  From 10% platform fee
                 </p>
               </CardContent>
             </Card>

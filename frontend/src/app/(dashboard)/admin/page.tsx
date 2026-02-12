@@ -192,7 +192,7 @@ export default function AdminPanelPage() {
             <div className="text-2xl font-bold">
               {formatRupiah(stats.revenue.platformRevenue)}
             </div>
-            <p className="text-xs text-muted-foreground mt-1">From 15% fees</p>
+            <p className="text-xs text-muted-foreground mt-1">From 10% fees</p>
           </CardContent>
         </Card>
 

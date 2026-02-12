@@ -670,7 +670,7 @@ export default function ProjectDetailPage() {
                       </div>
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">
-                          Platform Fee (15%)
+                          Platform Fee (10%)
                         </span>
                         <span className="text-muted-foreground">
                           {formatRupiah(escrow.platformFee)}

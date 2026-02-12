@@ -352,7 +352,7 @@ export default function AdminStatsPage() {
                 {formatRupiah(stats.revenue.platformRevenue)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                From 15% platform fees
+                From 10% platform fees
               </p>
             </CardContent>
           </Card>

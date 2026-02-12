@@ -39,7 +39,7 @@ const envSchema = z.object({
   CORS_ORIGINS: z.string().optional(),
 
   // Platform
-  PLATFORM_FEE_PERCENT: z.coerce.number().int().min(0).max(100).default(15),
+  PLATFORM_FEE_PERCENT: z.coerce.number().int().min(0).max(100).default(10),
 });
 
 const parsed = envSchema.safeParse(process.env);
