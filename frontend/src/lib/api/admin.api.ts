@@ -120,4 +120,43 @@ export const adminApi = {
     });
     return data;
   },
+
+  // ─── User Punishment ──────────────────────────────────
+
+  async warnUser(id: string, reason: string) {
+    const { data } = await api.put<ApiResponse<null>>(`/admin/users/${id}/warn`, { reason });
+    return data;
+  },
+
+  async clearWarnings(id: string) {
+    const { data } = await api.put<ApiResponse<null>>(`/admin/users/${id}/clear-warnings`);
+    return data;
+  },
+
+  async banUser(id: string, reason: string) {
+    const { data } = await api.put<ApiResponse<null>>(`/admin/users/${id}/ban`, { reason });
+    return data;
+  },
+
+  async unbanUser(id: string) {
+    const { data } = await api.put<ApiResponse<null>>(`/admin/users/${id}/unban`);
+    return data;
+  },
+
+  async deleteUser(id: string, reason: string) {
+    const { data } = await api.delete<ApiResponse<null>>(`/admin/users/${id}`, { data: { reason } });
+    return data;
+  },
+
+  // ─── Project Management ───────────────────────────────
+
+  async updateProjectStatus(id: string, status: string, reason: string) {
+    const { data } = await api.put<ApiResponse<null>>(`/admin/projects/${id}/status`, { status, reason });
+    return data;
+  },
+
+  async deleteProject(id: string, reason: string) {
+    const { data } = await api.delete<ApiResponse<null>>(`/admin/projects/${id}`, { data: { reason } });
+    return data;
+  },
 };

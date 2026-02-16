@@ -89,6 +89,8 @@ export interface AdminUser {
   role: 'CLIENT' | 'FREELANCER' | 'ADMIN';
   emailVerified: boolean;
   isSuspended: boolean;
+  isBanned: boolean;
+  warningCount: number;
   createdAt: string;
   freelancerProfile?: {
     displayName: string;

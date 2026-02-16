@@ -5,7 +5,7 @@ import { authenticate } from '../../middleware/auth';
 import { authorize } from '../../middleware/rbac';
 import { validate } from '../../middleware/validator';
 import { validateUUID } from '../../middleware/validateParam';
-import { suspendUserSchema, tierAdjustSchema, resolveDisputeSchema, failPayoutSchema } from '../../validators/schemas';
+import { suspendUserSchema, tierAdjustSchema, resolveDisputeSchema, failPayoutSchema, warnUserSchema, banUserSchema, adminUpdateProjectStatusSchema, adminDeleteReasonSchema } from '../../validators/schemas';
 
 const router = Router();
 
@@ -62,6 +62,31 @@ router.put('/users/:id/unsuspend', validateUUID('id'), (req, res, next) =>
 );
 router.put('/freelancers/:id/tier', validateUUID('id'), validate(tierAdjustSchema), (req, res, next) =>
   adminController.adjustTier(req, res, next)
+);
+
+// User punishment
+router.put('/users/:id/warn', validateUUID('id'), validate(warnUserSchema), (req, res, next) =>
+  adminController.warnUser(req, res, next)
+);
+router.put('/users/:id/clear-warnings', validateUUID('id'), (req, res, next) =>
+  adminController.clearWarnings(req, res, next)
+);
+router.put('/users/:id/ban', validateUUID('id'), validate(banUserSchema), (req, res, next) =>
+  adminController.banUser(req, res, next)
+);
+router.put('/users/:id/unban', validateUUID('id'), (req, res, next) =>
+  adminController.unbanUser(req, res, next)
+);
+router.delete('/users/:id', validateUUID('id'), validate(adminDeleteReasonSchema), (req, res, next) =>
+  adminController.deleteUser(req, res, next)
+);
+
+// Project management
+router.put('/projects/:id/status', validateUUID('id'), validate(adminUpdateProjectStatusSchema), (req, res, next) =>
+  adminController.updateProjectStatus(req, res, next)
+);
+router.delete('/projects/:id', validateUUID('id'), validate(adminDeleteReasonSchema), (req, res, next) =>
+  adminController.deleteProject(req, res, next)
 );
 
 export default router;

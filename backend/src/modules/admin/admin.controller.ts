@@ -184,6 +184,85 @@ export class AdminController {
       next(error);
     }
   }
+
+  // ─── User Punishment ──────────────────────────────────
+
+  async warnUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.warnUser(req.params.id as string, user.userId, req.body.reason);
+      sendSuccess(res, null, 'Warning issued');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async clearWarnings(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.clearWarnings(req.params.id as string, user.userId);
+      sendSuccess(res, null, 'Warnings cleared');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async banUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.banUser(req.params.id as string, user.userId, req.body.reason);
+      sendSuccess(res, null, 'User banned');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async unbanUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.unbanUser(req.params.id as string, user.userId);
+      sendSuccess(res, null, 'User unbanned');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteUser(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.deleteUser(req.params.id as string, user.userId, req.body.reason);
+      sendSuccess(res, null, 'User deleted');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── Project Management ───────────────────────────────
+
+  async updateProjectStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.adminUpdateProjectStatus(
+        req.params.id as string,
+        req.body.status,
+        user.userId,
+        req.body.reason,
+      );
+      sendSuccess(res, null, 'Project status updated');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async deleteProject(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { user } = req as AuthenticatedRequest;
+      await adminService.adminDeleteProject(req.params.id as string, user.userId, req.body.reason);
+      sendSuccess(res, null, 'Project deleted');
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 export const adminController = new AdminController();

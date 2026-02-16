@@ -164,6 +164,8 @@ export class AdminService {
           role: true,
           emailVerified: true,
           isSuspended: true,
+          isBanned: true,
+          warningCount: true,
           createdAt: true,
           freelancerProfile: true,
           clientProfile: true,
@@ -525,6 +527,180 @@ export class AdminService {
       recentEscrows,
       recentAdminActions,
     };
+  }
+  // ─── User Punishment ──────────────────────────────────
+
+  async warnUser(userId: string, adminId: string, reason: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'ADMIN') throw new AppError('Cannot warn an admin', 400);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { warningCount: { increment: 1 } },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'WARN_USER',
+        targetType: 'USER',
+        targetId: userId,
+        details: { reason, newWarningCount: user.warningCount + 1 },
+      },
+    });
+  }
+
+  async clearWarnings(userId: string, adminId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { warningCount: 0 },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'CLEAR_WARNINGS',
+        targetType: 'USER',
+        targetId: userId,
+      },
+    });
+  }
+
+  async banUser(userId: string, adminId: string, reason: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'ADMIN') throw new AppError('Cannot ban an admin', 400);
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: true, isSuspended: true },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'BAN_USER',
+        targetType: 'USER',
+        targetId: userId,
+        details: { reason },
+      },
+    });
+  }
+
+  async unbanUser(userId: string, adminId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { isBanned: false, isSuspended: false },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'UNBAN_USER',
+        targetType: 'USER',
+        targetId: userId,
+      },
+    });
+  }
+
+  async deleteUser(userId: string, adminId: string, reason: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new NotFoundError('User');
+    if (user.role === 'ADMIN') throw new AppError('Cannot delete an admin', 400);
+
+    // Block if user has active escrows
+    const activeEscrows = await prisma.escrow.count({
+      where: {
+        OR: [
+          { clientId: userId, status: 'FUNDED' },
+          { freelancerId: userId, status: 'FUNDED' },
+        ],
+      },
+    });
+    if (activeEscrows > 0) {
+      throw new AppError('Cannot delete user with active (funded) escrows. Resolve escrows first.', 400);
+    }
+
+    // Log action before deletion
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'DELETE_USER',
+        targetType: 'USER',
+        targetId: userId,
+        details: { reason, email: user.email, role: user.role },
+      },
+    });
+
+    await prisma.user.delete({ where: { id: userId } });
+  }
+
+  // ─── Admin Project Management ──────────────────────────
+
+  async adminUpdateProjectStatus(projectId: string, status: string, adminId: string, reason: string) {
+    const project = await prisma.project.findUnique({ where: { id: projectId } });
+    if (!project) throw new NotFoundError('Project');
+
+    const oldStatus = project.status;
+
+    await prisma.project.update({
+      where: { id: projectId },
+      data: { status: status as any },
+    });
+
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'UPDATE_PROJECT_STATUS',
+        targetType: 'PROJECT',
+        targetId: projectId,
+        details: { oldStatus, newStatus: status, reason },
+      },
+    });
+  }
+
+  async adminDeleteProject(projectId: string, adminId: string, reason: string) {
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      include: { escrow: true },
+    });
+    if (!project) throw new NotFoundError('Project');
+
+    if (project.escrow && project.escrow.status === 'FUNDED') {
+      throw new AppError('Cannot delete project with a funded escrow. Resolve or refund the escrow first.', 400);
+    }
+
+    // Log action before deletion
+    await prisma.adminAction.create({
+      data: {
+        adminId,
+        actionType: 'DELETE_PROJECT',
+        targetType: 'PROJECT',
+        targetId: projectId,
+        details: { reason, title: project.title, clientId: project.clientId },
+      },
+    });
+
+    // Delete related records in order
+    await prisma.$transaction([
+      prisma.delivery.deleteMany({ where: { projectId } }),
+      prisma.review.deleteMany({ where: { projectId } }),
+      prisma.dispute.deleteMany({ where: { projectId } }),
+      prisma.message.deleteMany({ where: { conversation: { projectId } } }),
+      prisma.conversation.deleteMany({ where: { projectId } }),
+      prisma.payout.deleteMany({ where: { escrow: { projectId } } }),
+      prisma.escrow.deleteMany({ where: { projectId } }),
+      prisma.bid.deleteMany({ where: { projectId } }),
+      prisma.milestone.deleteMany({ where: { projectId } }),
+      prisma.project.delete({ where: { id: projectId } }),
+    ]);
   }
 }
 

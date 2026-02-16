@@ -158,3 +158,20 @@ export const suspendUserSchema = z.object({
 export const tierAdjustSchema = z.object({
   tier: z.enum(['BRONZE', 'SILVER', 'GOLD', 'PLATINUM', 'LEGEND']),
 });
+
+export const adminUpdateProjectStatusSchema = z.object({
+  status: z.enum(['DRAFT', 'OPEN', 'IN_PROGRESS', 'DELIVERED', 'COMPLETED', 'DISPUTED', 'CANCELLED']),
+  reason: z.string().min(5).max(500),
+});
+
+export const adminDeleteReasonSchema = z.object({
+  reason: z.string().min(5).max(500),
+});
+
+export const warnUserSchema = z.object({
+  reason: z.string().min(5).max(500),
+});
+
+export const banUserSchema = z.object({
+  reason: z.string().min(5).max(500),
+});

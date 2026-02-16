@@ -33,6 +33,10 @@ import {
   Briefcase,
   Ban,
   CheckCircle2,
+  AlertTriangle,
+  ShieldBan,
+  ShieldCheck,
+  Trash2,
 } from "lucide-react";
 import { AxiosError } from "axios";
 
@@ -59,6 +63,21 @@ export default function AdminUsersPage() {
   const [tierTarget, setTierTarget] = useState<AdminUser | null>(null);
   const [newTier, setNewTier] = useState<string>("");
   const [isAdjustingTier, setIsAdjustingTier] = useState(false);
+
+  // Warn dialog
+  const [warnTarget, setWarnTarget] = useState<AdminUser | null>(null);
+  const [warnReason, setWarnReason] = useState("");
+  const [isWarning, setIsWarning] = useState(false);
+
+  // Ban dialog
+  const [banTarget, setBanTarget] = useState<AdminUser | null>(null);
+  const [banReason, setBanReason] = useState("");
+  const [isBanning, setIsBanning] = useState(false);
+
+  // Delete dialog
+  const [deleteTarget, setDeleteTarget] = useState<AdminUser | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
@@ -128,6 +147,79 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleWarn() {
+    if (!warnTarget || !warnReason.trim()) return;
+    setIsWarning(true);
+    try {
+      await adminApi.warnUser(warnTarget.id, warnReason.trim());
+      toast.success(`Warning issued to ${getUserDisplayName(warnTarget)}`);
+      setWarnTarget(null);
+      setWarnReason("");
+      fetchUsers();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to warn user");
+    } finally {
+      setIsWarning(false);
+    }
+  }
+
+  async function handleClearWarnings(user: AdminUser) {
+    try {
+      await adminApi.clearWarnings(user.id);
+      toast.success(`Warnings cleared for ${getUserDisplayName(user)}`);
+      fetchUsers();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to clear warnings");
+    }
+  }
+
+  async function handleBan() {
+    if (!banTarget || !banReason.trim()) return;
+    setIsBanning(true);
+    try {
+      await adminApi.banUser(banTarget.id, banReason.trim());
+      toast.success(`User ${getUserDisplayName(banTarget)} banned`);
+      setBanTarget(null);
+      setBanReason("");
+      fetchUsers();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to ban user");
+    } finally {
+      setIsBanning(false);
+    }
+  }
+
+  async function handleUnban(user: AdminUser) {
+    try {
+      await adminApi.unbanUser(user.id);
+      toast.success(`User ${getUserDisplayName(user)} unbanned`);
+      fetchUsers();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to unban user");
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget || !deleteReason.trim()) return;
+    setIsDeleting(true);
+    try {
+      await adminApi.deleteUser(deleteTarget.id, deleteReason.trim());
+      toast.success(`User ${getUserDisplayName(deleteTarget)} deleted`);
+      setDeleteTarget(null);
+      setDeleteReason("");
+      fetchUsers();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to delete user");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -174,9 +266,19 @@ export default function AdminUsersPage() {
                           <Badge variant="secondary" className="text-xs">
                             {u.role}
                           </Badge>
-                          {u.isSuspended && (
+                          {u.isBanned && (
+                            <Badge className="text-xs bg-red-900 text-red-200">
+                              Banned
+                            </Badge>
+                          )}
+                          {u.isSuspended && !u.isBanned && (
                             <Badge variant="destructive" className="text-xs">
                               Suspended
+                            </Badge>
+                          )}
+                          {u.warningCount > 0 && (
+                            <Badge className="text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300">
+                              ⚠ {u.warningCount} warning{u.warningCount !== 1 ? "s" : ""}
                             </Badge>
                           )}
                         </div>
@@ -223,7 +325,7 @@ export default function AdminUsersPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto flex-wrap">
                         {u.role === "FREELANCER" && (
                           <Button
                             variant="outline"
@@ -239,7 +341,27 @@ export default function AdminUsersPage() {
 
                         {u.role !== "ADMIN" && (
                           <>
-                            {u.isSuspended ? (
+                            {/* Warn */}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setWarnTarget(u)}>
+                              <AlertTriangle className="h-3.5 w-3.5 mr-1" />
+                              Warn
+                            </Button>
+
+                            {/* Clear warnings */}
+                            {u.warningCount > 0 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleClearWarnings(u)}>
+                                Clear Warns
+                              </Button>
+                            )}
+
+                            {/* Suspend / Unsuspend */}
+                            {u.isSuspended && !u.isBanned ? (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -247,7 +369,7 @@ export default function AdminUsersPage() {
                                 <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
                                 Unsuspend
                               </Button>
-                            ) : (
+                            ) : !u.isBanned ? (
                               <Button
                                 variant="destructive"
                                 size="sm"
@@ -255,7 +377,36 @@ export default function AdminUsersPage() {
                                 <Ban className="h-3.5 w-3.5 mr-1" />
                                 Suspend
                               </Button>
+                            ) : null}
+
+                            {/* Ban / Unban */}
+                            {u.isBanned ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleUnban(u)}>
+                                <ShieldCheck className="h-3.5 w-3.5 mr-1" />
+                                Unban
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                className="bg-red-900 hover:bg-red-800"
+                                onClick={() => setBanTarget(u)}>
+                                <ShieldBan className="h-3.5 w-3.5 mr-1" />
+                                Ban
+                              </Button>
                             )}
+
+                            {/* Delete */}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => setDeleteTarget(u)}>
+                              <Trash2 className="h-3.5 w-3.5 mr-1" />
+                              Delete
+                            </Button>
                           </>
                         )}
                       </div>
@@ -415,6 +566,184 @@ export default function AdminUsersPage() {
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
               Update Tier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Warn Dialog */}
+      <Dialog
+        open={!!warnTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setWarnTarget(null);
+            setWarnReason("");
+          }
+        }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Warn User
+            </DialogTitle>
+          </DialogHeader>
+          {warnTarget && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Issue a warning to{" "}
+                <span className="font-medium text-foreground">
+                  {getUserDisplayName(warnTarget)}
+                </span>{" "}
+                ({warnTarget.email}). Current warnings: {warnTarget.warningCount}.
+              </p>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={warnReason}
+                  onChange={(e) => setWarnReason(e.target.value)}
+                  placeholder="Reason for warning..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setWarnTarget(null);
+                setWarnReason("");
+              }}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+              onClick={handleWarn}
+              disabled={isWarning || !warnReason.trim()}>
+              {isWarning && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Issue Warning
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ban Dialog */}
+      <Dialog
+        open={!!banTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setBanTarget(null);
+            setBanReason("");
+          }
+        }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldBan className="h-5 w-5 text-red-700" />
+              Ban User
+            </DialogTitle>
+          </DialogHeader>
+          {banTarget && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Permanently ban{" "}
+                <span className="font-medium text-foreground">
+                  {getUserDisplayName(banTarget)}
+                </span>{" "}
+                ({banTarget.email})? They will be locked out of the platform. This can only be reversed by an admin using &quot;Unban&quot;.
+              </p>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={banReason}
+                  onChange={(e) => setBanReason(e.target.value)}
+                  placeholder="Reason for ban..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setBanTarget(null);
+                setBanReason("");
+              }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              className="bg-red-900 hover:bg-red-800"
+              onClick={handleBan}
+              disabled={isBanning || !banReason.trim()}>
+              {isBanning && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Confirm Ban
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteReason("");
+          }
+        }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete User
+            </DialogTitle>
+          </DialogHeader>
+          {deleteTarget && (
+            <div className="space-y-4">
+              <div className="p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
+                ⚠ This action is <strong>irreversible</strong>. The user account and all associated profiles will be permanently deleted.
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Delete{" "}
+                <span className="font-medium text-foreground">
+                  {getUserDisplayName(deleteTarget)}
+                </span>{" "}
+                ({deleteTarget.email})?
+              </p>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="Reason for deletion..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteReason("");
+              }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting || !deleteReason.trim()}>
+              {isDeleting && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Permanently Delete
             </Button>
           </DialogFooter>
         </DialogContent>

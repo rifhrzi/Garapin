@@ -28,7 +28,20 @@ import {
   Tag,
   ChevronLeft,
   ChevronRight,
+  Trash2,
+  RefreshCw,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { AxiosError } from "axios";
 
 const STATUS_COLORS: Record<string, string> = {
   DRAFT: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300",
@@ -79,6 +92,17 @@ export default function AdminProjectsPage() {
   const [searchInput, setSearchInput] = useState("");
   const limit = 20;
 
+  // Status change dialog
+  const [statusTarget, setStatusTarget] = useState<AdminProject | null>(null);
+  const [newStatus, setNewStatus] = useState("");
+  const [statusReason, setStatusReason] = useState("");
+  const [isChangingStatus, setIsChangingStatus] = useState(false);
+
+  // Delete dialog
+  const [deleteTarget, setDeleteTarget] = useState<AdminProject | null>(null);
+  const [deleteReason, setDeleteReason] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
+
   useEffect(() => {
     projectApi.getCategories().then(setCategories).catch(() => {});
   }, []);
@@ -112,6 +136,41 @@ export default function AdminProjectsPage() {
   }
 
   const totalPages = Math.ceil(total / limit);
+
+  async function handleStatusChange() {
+    if (!statusTarget || !newStatus || !statusReason.trim()) return;
+    setIsChangingStatus(true);
+    try {
+      await adminApi.updateProjectStatus(statusTarget.id, newStatus, statusReason.trim());
+      toast.success(`Project status updated to ${newStatus.replace("_", " ")}`);
+      setStatusTarget(null);
+      setNewStatus("");
+      setStatusReason("");
+      fetchProjects();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to update project status");
+    } finally {
+      setIsChangingStatus(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteTarget || !deleteReason.trim()) return;
+    setIsDeleting(true);
+    try {
+      await adminApi.deleteProject(deleteTarget.id, deleteReason.trim());
+      toast.success(`Project "${deleteTarget.title}" deleted`);
+      setDeleteTarget(null);
+      setDeleteReason("");
+      fetchProjects();
+    } catch (error) {
+      const message = error instanceof AxiosError ? error.response?.data?.message : undefined;
+      toast.error(message || "Failed to delete project");
+    } finally {
+      setIsDeleting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -281,12 +340,31 @@ export default function AdminProjectsPage() {
                         </div>
                       </div>
 
-                      <Button variant="outline" size="sm" asChild>
-                        <Link href={`/projects/${project.id}`}>
-                          <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                          View
-                        </Link>
-                      </Button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            setStatusTarget(project);
+                            setNewStatus(project.status);
+                          }}>
+                          <RefreshCw className="h-3.5 w-3.5 mr-1" />
+                          Status
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                          <Link href={`/projects/${project.id}`}>
+                            <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                            View
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => setDeleteTarget(project)}>
+                          <Trash2 className="h-3.5 w-3.5 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -322,6 +400,146 @@ export default function AdminProjectsPage() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Status Change Dialog */}
+      <Dialog
+        open={!!statusTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setStatusTarget(null);
+            setNewStatus("");
+            setStatusReason("");
+          }
+        }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RefreshCw className="h-5 w-5" />
+              Change Project Status
+            </DialogTitle>
+          </DialogHeader>
+          {statusTarget && (
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Change status for{" "}
+                <span className="font-medium text-foreground">
+                  {statusTarget.title}
+                </span>
+              </p>
+              <div className="p-3 bg-muted rounded-lg text-xs">
+                Current: <Badge className={`text-xs ${STATUS_COLORS[statusTarget.status] || ""}`}>
+                  {statusTarget.status.replace("_", " ")}
+                </Badge>
+              </div>
+              <div className="space-y-2">
+                <Label>New Status</Label>
+                <Select value={newStatus} onValueChange={setNewStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="DRAFT">Draft</SelectItem>
+                    <SelectItem value="OPEN">Open</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="DELIVERED">Delivered</SelectItem>
+                    <SelectItem value="COMPLETED">Completed</SelectItem>
+                    <SelectItem value="DISPUTED">Disputed</SelectItem>
+                    <SelectItem value="CANCELLED">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={statusReason}
+                  onChange={(e) => setStatusReason(e.target.value)}
+                  placeholder="Reason for status change..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setStatusTarget(null);
+                setNewStatus("");
+                setStatusReason("");
+              }}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleStatusChange}
+              disabled={isChangingStatus || !newStatus || !statusReason.trim() || newStatus === statusTarget?.status}>
+              {isChangingStatus && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Update Status
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Project Dialog */}
+      <Dialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteTarget(null);
+            setDeleteReason("");
+          }
+        }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Trash2 className="h-5 w-5 text-destructive" />
+              Delete Project
+            </DialogTitle>
+          </DialogHeader>
+          {deleteTarget && (
+            <div className="space-y-4">
+              <div className="p-3 bg-destructive/10 rounded-lg text-sm text-destructive">
+                ⚠ This action is <strong>irreversible</strong>. The project and all associated data (bids, milestones, deliveries, conversations) will be permanently deleted.
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Delete{" "}
+                <span className="font-medium text-foreground">
+                  {deleteTarget.title}
+                </span>?
+              </p>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="Reason for deletion..."
+                  rows={3}
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteTarget(null);
+                setDeleteReason("");
+              }}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={isDeleting || !deleteReason.trim()}>
+              {isDeleting && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Permanently Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
