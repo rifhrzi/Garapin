@@ -1,10 +1,18 @@
 import api from './client';
 import type { ApiResponse, PaginatedResponse, PayoutHistoryItem } from '@/types';
 
+let requestInFlight = false;
+
 export const payoutApi = {
   async requestPayout(amount: number) {
-    const { data } = await api.post<ApiResponse<PayoutHistoryItem>>('/payouts/request', { amount });
-    return data.data;
+    if (requestInFlight) throw new Error('Payout request already in progress');
+    requestInFlight = true;
+    try {
+      const { data } = await api.post<ApiResponse<PayoutHistoryItem>>('/payouts/request', { amount });
+      return data.data;
+    } finally {
+      requestInFlight = false;
+    }
   },
 
   async getHistory(page = 1, limit = 20) {

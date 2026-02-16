@@ -415,6 +415,27 @@ model AdminAction {
   @@map("admin_actions")
 }
 
+model TransactionLog {
+  id              String   @id @default(uuid())
+  type            String   // ESCROW_CREATED, ESCROW_FUNDED, ESCROW_RELEASED, ESCROW_REFUNDED, PAYOUT_REQUESTED, PAYOUT_PROCESSING, PAYOUT_COMPLETED, PAYOUT_FAILED, DISPUTE_REFUND
+  referenceId     String   @map("reference_id")
+  referenceType   String   @map("reference_type")   // ESCROW or PAYOUT
+  amount          Decimal  @db.Decimal(12, 2)
+  fromStatus      String?  @map("from_status")
+  toStatus        String   @map("to_status")
+  actorId         String?  @map("actor_id")
+  actorType       String?  @map("actor_type")        // CLIENT, FREELANCER, ADMIN, SYSTEM
+  metadata        Json?
+  ipAddress       String?  @map("ip_address")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  @@index([referenceId])
+  @@index([type])
+  @@index([actorId])
+  @@index([createdAt])
+  @@map("transaction_logs")
+}
+
 model Delivery {
   id           String   @id @default(uuid())
   projectId    String   @map("project_id")

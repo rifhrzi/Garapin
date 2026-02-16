@@ -356,6 +356,21 @@ export class AdminService {
       },
     });
 
+    // Audit log
+    await prisma.transactionLog.create({
+      data: {
+        type: 'PAYOUT_PROCESSING',
+        referenceId: payoutId,
+        referenceType: 'PAYOUT',
+        amount: Number(payout.amount),
+        fromStatus: 'PENDING',
+        toStatus: 'PROCESSING',
+        actorId: adminId,
+        actorType: 'ADMIN',
+        metadata: { freelancerId: payout.freelancerId },
+      },
+    });
+
     return updated;
   }
 
@@ -384,6 +399,21 @@ export class AdminService {
       },
     });
 
+    // Audit log
+    await prisma.transactionLog.create({
+      data: {
+        type: 'PAYOUT_COMPLETED',
+        referenceId: payoutId,
+        referenceType: 'PAYOUT',
+        amount: Number(payout.amount),
+        fromStatus: 'PROCESSING',
+        toStatus: 'COMPLETED',
+        actorId: adminId,
+        actorType: 'ADMIN',
+        metadata: { freelancerId: payout.freelancerId },
+      },
+    });
+
     return updated;
   }
 
@@ -409,6 +439,21 @@ export class AdminService {
         targetType: 'PAYOUT',
         targetId: payoutId,
         details: { amount: Number(payout.amount), freelancerId: payout.freelancerId, reason },
+      },
+    });
+
+    // Audit log
+    await prisma.transactionLog.create({
+      data: {
+        type: 'PAYOUT_FAILED',
+        referenceId: payoutId,
+        referenceType: 'PAYOUT',
+        amount: Number(payout.amount),
+        fromStatus: payout.status,
+        toStatus: 'FAILED',
+        actorId: adminId,
+        actorType: 'ADMIN',
+        metadata: { freelancerId: payout.freelancerId, reason },
       },
     });
 

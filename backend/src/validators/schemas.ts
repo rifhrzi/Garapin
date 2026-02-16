@@ -136,7 +136,10 @@ export const updateStatusSchema = z.object({
 
 // Payout
 export const requestPayoutSchema = z.object({
-  amount: z.number().positive('Amount must be greater than zero'),
+  amount: z.number()
+    .positive('Amount must be greater than zero')
+    .min(10000, 'Minimum payout is Rp 10,000')
+    .max(50000000, 'Maximum payout is Rp 50,000,000'),
 });
 
 export const updateBankDetailsSchema = z.object({

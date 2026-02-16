@@ -5,13 +5,14 @@ import { authorize } from '../../middleware/rbac';
 import { validate } from '../../middleware/validator';
 import { validateUUID } from '../../middleware/validateParam';
 import { requestPayoutSchema } from '../../validators/schemas';
+import { paymentLimiter } from '../../middleware/rateLimiter';
 
 const router = Router();
 
 // All payout routes require FREELANCER role
 router.use(authenticate, authorize('FREELANCER'));
 
-router.post('/request', validate(requestPayoutSchema), (req, res, next) =>
+router.post('/request', paymentLimiter, validate(requestPayoutSchema), (req, res, next) =>
   payoutController.requestPayout(req, res, next)
 );
 

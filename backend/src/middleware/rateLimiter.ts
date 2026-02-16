@@ -23,3 +23,19 @@ export const chatLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+export const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { success: false, message: 'Too many payment requests. Please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+export const webhookLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 100,
+  message: { success: false, message: 'Webhook rate limit exceeded.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

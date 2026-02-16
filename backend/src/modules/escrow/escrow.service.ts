@@ -4,6 +4,7 @@ import { AppError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { logger } from '../../utils/logger';
 import { midtransService } from '../../services/midtrans.service';
 import { tierService } from '../../services/tier.service';
+import { logTransaction } from '../../utils/transactionLogger';
 
 interface MidtransNotificationPayload {
   order_id: string;
@@ -34,6 +35,11 @@ export class EscrowService {
 
     const acceptedBid = project.bids[0];
     const totalAmount = Number(acceptedBid.amount);
+
+    // Amount boundary validation
+    if (totalAmount <= 0) throw new AppError('Invalid bid amount', 400);
+    if (totalAmount > 500000000) throw new AppError('Amount exceeds maximum limit (Rp 500,000,000)', 400);
+
     const platformFee = totalAmount * (env.PLATFORM_FEE_PERCENT / 100);
     const freelancerAmount = totalAmount - platformFee;
 
@@ -62,6 +68,18 @@ export class EscrowService {
       },
     });
 
+    // Audit log: escrow created
+    await logTransaction({
+      type: 'ESCROW_CREATED',
+      referenceId: escrow.id,
+      referenceType: 'ESCROW',
+      amount: totalAmount,
+      toStatus: 'PENDING',
+      actorId: clientId,
+      actorType: 'CLIENT',
+      metadata: { projectId, orderId, platformFee, freelancerAmount },
+    });
+
     return { escrow, snapToken: transaction.token };
   }
 
@@ -84,6 +102,25 @@ export class EscrowService {
     const { transaction_status, fraud_status } = payload;
 
     if (midtransService.isPaymentSuccess(transaction_status, fraud_status)) {
+      // Idempotency: skip if already funded
+      if (escrow.status === 'FUNDED') {
+        logger.info('Webhook duplicate: escrow already funded', { orderId, escrowId: escrow.id });
+        return;
+      }
+
+      // Amount verification: reject tampered amounts
+      const webhookAmount = parseFloat(payload.gross_amount);
+      if (Math.abs(webhookAmount - Number(escrow.totalAmount)) > 1) {
+        logger.error('Webhook amount mismatch — possible tampering', {
+          orderId,
+          escrowId: escrow.id,
+          expected: Number(escrow.totalAmount),
+          received: webhookAmount,
+        });
+        return;
+      }
+
+      const previousStatus = escrow.status;
       await prisma.$transaction([
         prisma.escrow.update({
           where: { id: escrow.id },
@@ -93,6 +130,19 @@ export class EscrowService {
         prisma.conversation.updateMany({
           where: { projectId: escrow.projectId },
           data: { escrowActive: true },
+        }),
+        // Audit log
+        prisma.transactionLog.create({
+          data: {
+            type: 'ESCROW_FUNDED',
+            referenceId: escrow.id,
+            referenceType: 'ESCROW',
+            amount: Number(escrow.totalAmount),
+            fromStatus: previousStatus,
+            toStatus: 'FUNDED',
+            actorType: 'SYSTEM',
+            metadata: { orderId, paymentType: payload.payment_type, transactionTime: payload.transaction_time },
+          },
         }),
       ]);
     } else if (midtransService.isPaymentExpiredOrCancelled(transaction_status)) {
@@ -138,6 +188,20 @@ export class EscrowService {
           where: { projectId: escrow.projectId },
           data: { escrowActive: true },
         }),
+        // Audit log
+        prisma.transactionLog.create({
+          data: {
+            type: 'ESCROW_FUNDED',
+            referenceId: escrow.id,
+            referenceType: 'ESCROW',
+            amount: Number(escrow.totalAmount),
+            fromStatus: 'PENDING',
+            toStatus: 'FUNDED',
+            actorId: userId,
+            actorType: 'CLIENT',
+            metadata: { source: 'polling', orderId: escrow.midtransOrderId },
+          },
+        }),
       ]);
       return { status: 'FUNDED', updated: true };
     }
@@ -169,6 +233,26 @@ export class EscrowService {
       await tx.project.update({
         where: { id: escrow.projectId },
         data: { status: 'COMPLETED' },
+      });
+
+      // Audit log
+      await tx.transactionLog.create({
+        data: {
+          type: 'ESCROW_RELEASED',
+          referenceId: escrow.id,
+          referenceType: 'ESCROW',
+          amount: Number(escrow.freelancerAmount),
+          fromStatus: 'FUNDED',
+          toStatus: 'RELEASED',
+          actorId: clientId,
+          actorType: 'CLIENT',
+          metadata: {
+            projectId: escrow.projectId,
+            freelancerId: escrow.freelancerId,
+            totalAmount: Number(escrow.totalAmount),
+            platformFee: Number(escrow.platformFee),
+          },
+        },
       });
 
       return { escrow: updatedEscrow };

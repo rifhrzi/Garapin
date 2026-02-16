@@ -233,17 +233,7 @@ export class ProjectService {
 
     // If completing the project and escrow is funded, auto-release the escrow
     if (newStatus === 'COMPLETED' && project.escrow?.status === 'FUNDED') {
-      // Create payout record
-      await prisma.payout.create({
-        data: {
-          escrowId: project.escrow.id,
-          freelancerId: project.escrow.freelancerId,
-          amount: project.escrow.freelancerAmount,
-          status: 'PENDING',
-        },
-      });
-
-      // Atomically update escrow + project
+      // Atomically: release escrow + complete project + create payout record + audit log
       const [, updatedProject] = await prisma.$transaction([
         prisma.escrow.update({
           where: { id: project.escrow.id },
@@ -252,6 +242,27 @@ export class ProjectService {
         prisma.project.update({
           where: { id: projectId },
           data: { status: newStatus },
+        }),
+        prisma.payout.create({
+          data: {
+            escrowId: project.escrow.id,
+            freelancerId: project.escrow.freelancerId,
+            amount: project.escrow.freelancerAmount,
+            status: 'PENDING',
+          },
+        }),
+        prisma.transactionLog.create({
+          data: {
+            type: 'ESCROW_RELEASED',
+            referenceId: project.escrow.id,
+            referenceType: 'ESCROW',
+            amount: Number(project.escrow.freelancerAmount),
+            fromStatus: 'FUNDED',
+            toStatus: 'RELEASED',
+            actorId: userId,
+            actorType: 'CLIENT',
+            metadata: { projectId, trigger: 'project_completion' },
+          },
         }),
       ]);
 

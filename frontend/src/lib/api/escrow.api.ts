@@ -1,13 +1,22 @@
 import api from './client';
 import type { ApiResponse, Escrow, EarningsData } from '@/types';
 
+let createInFlight = false;
+let releaseInFlight = false;
+
 export const escrowApi = {
   async create(projectId: string) {
-    const { data } = await api.post<ApiResponse<{ escrow: Escrow; snapToken: string }>>(
-      '/escrow/create',
-      { projectId }
-    );
-    return data.data;
+    if (createInFlight) throw new Error('Payment already in progress');
+    createInFlight = true;
+    try {
+      const { data } = await api.post<ApiResponse<{ escrow: Escrow; snapToken: string }>>(
+        '/escrow/create',
+        { projectId }
+      );
+      return data.data;
+    } finally {
+      createInFlight = false;
+    }
   },
 
   async getById(id: string) {
@@ -26,8 +35,14 @@ export const escrowApi = {
   },
 
   async release(id: string) {
-    const { data } = await api.post<ApiResponse<{ escrow: Escrow }>>(`/escrow/${id}/release`);
-    return data.data;
+    if (releaseInFlight) throw new Error('Release already in progress');
+    releaseInFlight = true;
+    try {
+      const { data } = await api.post<ApiResponse<{ escrow: Escrow }>>(`/escrow/${id}/release`);
+      return data.data;
+    } finally {
+      releaseInFlight = false;
+    }
   },
 
   async getEarnings() {

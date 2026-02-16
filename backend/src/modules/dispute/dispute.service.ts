@@ -96,6 +96,20 @@ export class DisputeService {
             where: { id: dispute.projectId },
             data: { status: 'CANCELLED' },
           });
+          // Audit: escrow refunded
+          await tx.transactionLog.create({
+            data: {
+              type: 'ESCROW_REFUNDED',
+              referenceId: dispute.project.escrow.id,
+              referenceType: 'ESCROW',
+              amount: Number(dispute.project.escrow.totalAmount),
+              fromStatus: dispute.project.escrow.status,
+              toStatus: 'REFUNDED',
+              actorId: adminId,
+              actorType: 'ADMIN',
+              metadata: { disputeId, outcome: input.outcome, resolution: input.resolution },
+            },
+          });
         } else if (input.outcome === 'NO_REFUND') {
           await tx.escrow.update({
             where: { id: dispute.project.escrow.id },
@@ -104,6 +118,20 @@ export class DisputeService {
           await tx.project.update({
             where: { id: dispute.projectId },
             data: { status: 'COMPLETED' },
+          });
+          // Audit: escrow released via dispute
+          await tx.transactionLog.create({
+            data: {
+              type: 'DISPUTE_RELEASE',
+              referenceId: dispute.project.escrow.id,
+              referenceType: 'ESCROW',
+              amount: Number(dispute.project.escrow.freelancerAmount),
+              fromStatus: dispute.project.escrow.status,
+              toStatus: 'RELEASED',
+              actorId: adminId,
+              actorType: 'ADMIN',
+              metadata: { disputeId, outcome: input.outcome, resolution: input.resolution },
+            },
           });
         } else {
           // PARTIAL_REFUND - mark as released, admin handles manually
@@ -114,6 +142,20 @@ export class DisputeService {
           await tx.project.update({
             where: { id: dispute.projectId },
             data: { status: 'COMPLETED' },
+          });
+          // Audit: partial refund resolution
+          await tx.transactionLog.create({
+            data: {
+              type: 'DISPUTE_PARTIAL_REFUND',
+              referenceId: dispute.project.escrow.id,
+              referenceType: 'ESCROW',
+              amount: Number(dispute.project.escrow.totalAmount),
+              fromStatus: dispute.project.escrow.status,
+              toStatus: 'RELEASED',
+              actorId: adminId,
+              actorType: 'ADMIN',
+              metadata: { disputeId, outcome: input.outcome, resolution: input.resolution },
+            },
           });
         }
       }
