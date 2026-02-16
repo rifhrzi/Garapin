@@ -539,7 +539,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-6 overflow-hidden">
           {/* Client Info */}
           <Card>
             <CardHeader>

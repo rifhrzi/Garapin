@@ -121,7 +121,7 @@ export default function AdminDisputesPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="all">All</TabsTrigger>
           <TabsTrigger value="OPEN">Open</TabsTrigger>
           <TabsTrigger value="UNDER_REVIEW">Under Review</TabsTrigger>
@@ -170,7 +170,7 @@ export default function AdminDisputesPage() {
                           {dispute.description}
                         </p>
 
-                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
+                        <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground flex-wrap">
                           <span className="flex items-center gap-1">
                             <Briefcase className="h-3.5 w-3.5" />
                             {dispute.project?.title || "Unknown project"}

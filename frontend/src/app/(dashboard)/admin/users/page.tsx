@@ -141,7 +141,7 @@ export default function AdminUsersPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList className="flex-wrap h-auto">
           <TabsTrigger value="all">All Users</TabsTrigger>
           <TabsTrigger value="CLIENT">Clients</TabsTrigger>
           <TabsTrigger value="FREELANCER">Freelancers</TabsTrigger>
@@ -165,7 +165,7 @@ export default function AdminUsersPage() {
               {users.map((u) => (
                 <Card key={u.id}>
                   <CardContent className="py-3">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium text-sm truncate">
@@ -223,7 +223,7 @@ export default function AdminUsersPage() {
                         </p>
                       </div>
 
-                      <div className="flex items-center gap-2 shrink-0">
+                      <div className="flex items-center gap-2 shrink-0 self-end sm:self-auto">
                         {u.role === "FREELANCER" && (
                           <Button
                             variant="outline"

@@ -123,15 +123,17 @@ export default function AdminPanelPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
+      {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold flex items-center gap-2">
-          <Shield className="h-6 w-6" />
+        <h1 className="text-3xl font-bold flex items-center gap-3 tracking-tight">
+          <Shield className="h-8 w-8 text-primary" />
           Admin Dashboard
         </h1>
-        <p className="text-muted-foreground">
+        <p className="text-lg text-muted-foreground mt-2">
           Complete platform overview and monitoring.
         </p>
       </div>
+      <Separator />
 
       {/* Key Metrics - 6 cards */}
       <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">

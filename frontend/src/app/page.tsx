@@ -176,7 +176,7 @@ export default function HomePage() {
             <Badge variant="secondary" className="mb-4 text-sm px-4 py-1">
               Platform Freelance Indonesia
             </Badge>
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
+            <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold tracking-tight mb-6">
               Temukan Freelancer{" "}
               <span className="text-primary">Terpercaya</span> untuk Project
               Anda
