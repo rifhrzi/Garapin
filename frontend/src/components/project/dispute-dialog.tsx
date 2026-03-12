@@ -106,9 +106,9 @@ export function DisputeDialog({
                 <SelectValue placeholder="Select a reason..." />
               </SelectTrigger>
               <SelectContent>
-                {DISPUTE_REASONS.map((r) => (
-                  <SelectItem key={r} value={r}>
-                    {r}
+                {DISPUTE_REASONS.map((reason) => (
+                  <SelectItem key={reason} value={reason}>
+                    {reason}
                   </SelectItem>
                 ))}
               </SelectContent>

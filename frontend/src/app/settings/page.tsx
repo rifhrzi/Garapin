@@ -273,7 +273,7 @@ function SettingsContent() {
             <Label>Theme</Label>
             <Select
               value={theme ?? "system"}
-              onValueChange={(v) => setTheme(v)}>
+              onValueChange={(selectedTheme) => setTheme(selectedTheme)}>
               <SelectTrigger className="w-[200px]">
                 <SelectValue placeholder="Select theme" />
               </SelectTrigger>

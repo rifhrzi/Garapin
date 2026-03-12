@@ -152,11 +152,11 @@ export class ChatService {
           originalContent: input.content,
           type: 'SYSTEM',
           wasFiltered: true,
-          filterReason: filterResult.flags.map((f) => f.type).join(', '),
+          filterReason: filterResult.flags.map((flag) => flag.type).join(', '),
           flags: {
-            create: filterResult.flags.map((f) => ({
-              flagType: f.type,
-              matchedPattern: f.pattern,
+            create: filterResult.flags.map((flag) => ({
+              flagType: flag.type,
+              matchedPattern: flag.pattern,
             })),
           },
         },
@@ -180,14 +180,14 @@ export class ChatService {
         wasFiltered: filterResult.flags.length > 0,
         filterReason:
           filterResult.flags.length > 0
-            ? filterResult.flags.map((f) => f.type).join(', ')
+            ? filterResult.flags.map((flag) => flag.type).join(', ')
             : null,
         ...(filterResult.flags.length > 0
           ? {
             flags: {
-              create: filterResult.flags.map((f) => ({
-                flagType: f.type,
-                matchedPattern: f.pattern,
+              create: filterResult.flags.map((flag) => ({
+                flagType: flag.type,
+                matchedPattern: flag.pattern,
               })),
             },
           }

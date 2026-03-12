@@ -252,7 +252,7 @@ export default function AdminDisputesPage() {
                 <Label>Outcome</Label>
                 <Select
                   value={outcome}
-                  onValueChange={(val) => setOutcome(val as DisputeOutcome)}>
+                  onValueChange={(selectedOutcome) => setOutcome(selectedOutcome as DisputeOutcome)}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select outcome..." />
                   </SelectTrigger>

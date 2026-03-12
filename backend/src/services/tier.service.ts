@@ -66,7 +66,7 @@ export class TierService {
     });
 
     const avgRating =
-      reviews.length > 0 ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : 0;
+      reviews.length > 0 ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length : 0;
 
     const completionRate = totalProjects > 0 ? (completedProjects / totalProjects) * 100 : 100;
     const disputeRate = totalProjects > 0 ? (disputedProjects / totalProjects) * 100 : 0;
@@ -88,7 +88,7 @@ export class TierService {
     // Calculate EXP
     const expPoints =
       completedProjects * EXP_REWARDS.PROJECT_COMPLETED +
-      reviews.filter((r) => r.rating === 5).length * EXP_REWARDS.FIVE_STAR_REVIEW +
+      reviews.filter((review) => review.rating === 5).length * EXP_REWARDS.FIVE_STAR_REVIEW +
       disputedProjects * EXP_REWARDS.DISPUTE_PENALTY;
 
     await prisma.freelancerProfile.update({

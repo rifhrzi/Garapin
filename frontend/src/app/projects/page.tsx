@@ -162,8 +162,8 @@ function ProjectsContent() {
                   </label>
                   <Select
                     value={categoryId}
-                    onValueChange={(v) => {
-                      setCategoryId(v === "all" ? "" : v);
+                    onValueChange={(selectedCategoryId) => {
+                      setCategoryId(selectedCategoryId === "all" ? "" : selectedCategoryId);
                       setPage(1);
                     }}>
                     <SelectTrigger>
@@ -185,8 +185,8 @@ function ProjectsContent() {
                   </label>
                   <Select
                     value={type}
-                    onValueChange={(v) => {
-                      setType(v === "all" ? "" : v);
+                    onValueChange={(selectedType) => {
+                      setType(selectedType === "all" ? "" : selectedType);
                       setPage(1);
                     }}>
                     <SelectTrigger>
@@ -302,7 +302,7 @@ function ProjectsContent() {
             variant="outline"
             size="sm"
             disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}>
+            onClick={() => setPage((currentPage) => currentPage - 1)}>
             Previous
           </Button>
           <span className="text-sm text-muted-foreground px-4">
@@ -312,7 +312,7 @@ function ProjectsContent() {
             variant="outline"
             size="sm"
             disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}>
+            onClick={() => setPage((currentPage) => currentPage + 1)}>
             Next
           </Button>
         </div>

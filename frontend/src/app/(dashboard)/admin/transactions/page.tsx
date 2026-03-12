@@ -137,8 +137,8 @@ function EscrowsTab() {
       <div className="flex items-center gap-3">
         <Select
           value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
+          onValueChange={(selectedStatus) => {
+            setStatusFilter(selectedStatus);
             setPage(1);
           }}
         >
@@ -369,8 +369,8 @@ function PayoutsTab() {
       <div className="flex items-center gap-3">
         <Select
           value={statusFilter}
-          onValueChange={(v) => {
-            setStatusFilter(v);
+          onValueChange={(selectedStatus) => {
+            setStatusFilter(selectedStatus);
             setPage(1);
           }}
         >

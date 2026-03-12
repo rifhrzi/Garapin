@@ -465,20 +465,20 @@ export default function AdminPanelPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {stats.recentProjects.map((p) => (
+                {stats.recentProjects.map((project) => (
                   <Link
-                    key={p.id}
-                    href={`/projects/${p.id}`}
+                    key={project.id}
+                    href={`/projects/${project.id}`}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{p.title}</p>
+                      <p className="text-sm font-medium truncate">{project.title}</p>
                       <p className="text-xs text-muted-foreground">
-                        {getDisplayName(p.client)} &middot; {p.category.name}
+                        {getDisplayName(project.client)} &middot; {project.category.name}
                       </p>
                     </div>
                     <Badge
-                      className={`text-xs shrink-0 ml-2 ${STATUS_COLORS[p.status] || ""}`}>
-                      {p.status.replace("_", " ")}
+                      className={`text-xs shrink-0 ml-2 ${STATUS_COLORS[project.status] || ""}`}>
+                      {project.status.replace("_", " ")}
                     </Badge>
                   </Link>
                 ))}
@@ -509,20 +509,20 @@ export default function AdminPanelPage() {
               </p>
             ) : (
               <div className="space-y-2">
-                {stats.recentDisputes.map((d) => (
+                {stats.recentDisputes.map((dispute) => (
                   <div
-                    key={d.id}
+                    key={dispute.id}
                     className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{d.reason}</p>
+                      <p className="text-sm font-medium truncate">{dispute.reason}</p>
                       <p className="text-xs text-muted-foreground">
-                        {d.project.title} &middot; by{" "}
-                        {getDisplayName(d.initiator)}
+                        {dispute.project.title} &middot; by{" "}
+                        {getDisplayName(dispute.initiator)}
                       </p>
                     </div>
                     <Badge
-                      className={`text-xs shrink-0 ml-2 ${DISPUTE_STATUS_COLORS[d.status] || ""}`}>
-                      {d.status.replace("_", " ")}
+                      className={`text-xs shrink-0 ml-2 ${DISPUTE_STATUS_COLORS[dispute.status] || ""}`}>
+                      {dispute.status.replace("_", " ")}
                     </Badge>
                   </div>
                 ))}

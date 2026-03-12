@@ -43,7 +43,7 @@ export function ReviewSection({
   clientName,
   onSuccess,
 }: ReviewSectionProps) {
-  const hasReviewed = reviews.some((r) => r.reviewerId === currentUserId);
+  const hasReviewed = reviews.some((review) => review.reviewerId === currentUserId);
 
   return (
     <Card>

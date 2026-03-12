@@ -10,9 +10,9 @@ export function validate(schema: ZodSchema, source: 'body' | 'query' | 'params' 
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const formattedErrors = error.errors.map((e) => ({
-          field: e.path.join('.'),
-          message: e.message,
+        const formattedErrors = error.errors.map((zodError) => ({
+          field: zodError.path.join('.'),
+          message: zodError.message,
         }));
         return sendError(res, 'Validation failed', 422, formattedErrors);
       }
