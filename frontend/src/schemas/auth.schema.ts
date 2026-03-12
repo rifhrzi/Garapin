@@ -19,7 +19,7 @@ export const registerSchema = z
       .max(100),
     phone: z.string().optional(),
     companyName: z.string().optional(),
-    acceptTerms: z.boolean().refine((val) => val === true, {
+    acceptTerms: z.boolean().refine((acceptedTerms) => acceptedTerms === true, {
       message: 'You must accept the Terms & Conditions',
     }),
   })

@@ -109,10 +109,10 @@ function ClientDashboard() {
   );
 
   const activeProjects = (projects ?? []).filter(
-    (p) => p.status === "IN_PROGRESS" || p.status === "DELIVERED"
+    (project) => project.status === "IN_PROGRESS" || project.status === "DELIVERED"
   );
   const completedProjects = (projects ?? []).filter(
-    (p) => p.status === "COMPLETED"
+    (project) => project.status === "COMPLETED"
   );
   const totalProjects = (projects ?? []).length;
 
@@ -173,7 +173,7 @@ function ClientDashboard() {
             <div className="text-2xl font-bold">
               {isLoading
                 ? "..."
-                : (projects ?? []).filter((p) => p.status === "OPEN").length}
+                : (projects ?? []).filter((project) => project.status === "OPEN").length}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               Awaiting bids

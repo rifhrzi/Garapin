@@ -47,9 +47,9 @@ let failedQueue: Array<{
 }> = [];
 
 function processQueue(error: unknown, token: string | null) {
-  failedQueue.forEach((p) => {
-    if (error) p.reject(error);
-    else p.resolve(token!);
+  failedQueue.forEach((queuedRequest) => {
+    if (error) queuedRequest.reject(error);
+    else queuedRequest.resolve(token!);
   });
   failedQueue = [];
 }

@@ -56,7 +56,7 @@ export function useRealtimeMessages(
           // optimistic updates).
           const newMsg = payload.new as MessageRow;
           setMessages((prev) => {
-            const exists = prev.some((m) => m.id === newMsg.id);
+            const exists = prev.some((message) => message.id === newMsg.id);
             if (exists) return prev;
 
             // Map DB snake_case to our camelCase type
@@ -98,7 +98,7 @@ export function useRealtimeMessages(
   // Add a message optimistically (before API confirms)
   const addOptimisticMessage = useCallback((message: Message) => {
     setMessages((prev) => {
-      const exists = prev.some((m) => m.id === message.id);
+      const exists = prev.some((existingMessage) => existingMessage.id === message.id);
       if (exists) return prev;
       return [...prev, message];
     });
@@ -107,15 +107,15 @@ export function useRealtimeMessages(
   // Replace an optimistic message with the real one from API
   const replaceMessage = useCallback((tempId: string, realMessage: Message) => {
     setMessages((prev) =>
-      prev.map((m) => (m.id === tempId ? realMessage : m))
+      prev.map((existingMessage) => (existingMessage.id === tempId ? realMessage : existingMessage))
     );
   }, []);
 
   // Prepend older messages (for pagination / load more)
   const prependMessages = useCallback((olderMessages: Message[]) => {
     setMessages((prev) => {
-      const existingIds = new Set(prev.map((m) => m.id));
-      const newOnes = olderMessages.filter((m) => !existingIds.has(m.id));
+      const existingIds = new Set(prev.map((existingMessage) => existingMessage.id));
+      const newOnes = olderMessages.filter((olderMessage) => !existingIds.has(olderMessage.id));
       return [...newOnes, ...prev];
     });
   }, []);

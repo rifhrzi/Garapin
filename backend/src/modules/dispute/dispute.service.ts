@@ -36,7 +36,7 @@ export class DisputeService {
     if (existing) throw new AppError('An active dispute already exists for this project', 400);
 
     const dispute = await prisma.$transaction(async (tx) => {
-      const d = await tx.dispute.create({
+      const createdDispute = await tx.dispute.create({
         data: {
           projectId: input.projectId,
           initiatedBy: userId,
@@ -57,7 +57,7 @@ export class DisputeService {
         });
       }
 
-      return d;
+      return createdDispute;
     });
 
     return dispute;
@@ -256,7 +256,7 @@ export class DisputeService {
 
     for (const project of ghostedProjects) {
       const dispute = await prisma.$transaction(async (tx) => {
-        const d = await tx.dispute.create({
+        const createdDispute = await tx.dispute.create({
           data: {
             projectId: project.id,
             initiatedBy: project.clientId,
@@ -273,14 +273,14 @@ export class DisputeService {
           where: { projectId: project.id, status: 'FUNDED' },
           data: { status: 'DISPUTED' },
         });
-        return d;
+        return createdDispute;
       });
       autoDisputes.push(dispute);
     }
 
     for (const project of overdueProjects) {
       const dispute = await prisma.$transaction(async (tx) => {
-        const d = await tx.dispute.create({
+        const createdDispute = await tx.dispute.create({
           data: {
             projectId: project.id,
             initiatedBy: project.clientId,
@@ -297,7 +297,7 @@ export class DisputeService {
           where: { projectId: project.id, status: 'FUNDED' },
           data: { status: 'DISPUTED' },
         });
-        return d;
+        return createdDispute;
       });
       autoDisputes.push(dispute);
     }

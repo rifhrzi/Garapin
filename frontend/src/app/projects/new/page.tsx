@@ -100,7 +100,7 @@ function CreateProjectContent() {
         ...values,
         milestones:
           values.milestones && values.milestones.length > 0
-            ? values.milestones.filter((m) => m.title && m.amount > 0)
+            ? values.milestones.filter((milestone) => milestone.title && milestone.amount > 0)
             : undefined,
       };
       const project = await projectApi.create(payload);

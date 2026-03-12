@@ -58,7 +58,7 @@ export class ChatFilterService {
     for (const pattern of PHONE_PATTERNS) {
       const matches = content.match(pattern);
       if (matches) {
-        matches.forEach((m) => flags.push({ type: 'PHONE', pattern: m }));
+        matches.forEach((matchedText) => flags.push({ type: 'PHONE', pattern: matchedText }));
         sanitizedContent = sanitizedContent.replace(pattern, '[FILTERED]');
       }
     }
@@ -66,7 +66,7 @@ export class ChatFilterService {
     // 2. Email detection
     const emailMatches = content.match(EMAIL_PATTERN);
     if (emailMatches) {
-      emailMatches.forEach((m) => flags.push({ type: 'EMAIL', pattern: m }));
+      emailMatches.forEach((matchedText) => flags.push({ type: 'EMAIL', pattern: matchedText }));
       sanitizedContent = sanitizedContent.replace(EMAIL_PATTERN, '[FILTERED]');
     }
 
@@ -74,7 +74,7 @@ export class ChatFilterService {
     for (const pattern of URL_PATTERNS) {
       const matches = content.match(pattern);
       if (matches) {
-        matches.forEach((m) => flags.push({ type: 'URL', pattern: m }));
+        matches.forEach((matchedText) => flags.push({ type: 'URL', pattern: matchedText }));
         if (!escrowActive) {
           sanitizedContent = sanitizedContent.replace(pattern, '[FILTERED]');
         }
@@ -84,7 +84,7 @@ export class ChatFilterService {
     // 4. Social media handles
     const handleMatches = content.match(SOCIAL_HANDLE_PATTERN);
     if (handleMatches) {
-      handleMatches.forEach((m) => flags.push({ type: 'SOCIAL_MEDIA', pattern: m }));
+      handleMatches.forEach((matchedText) => flags.push({ type: 'SOCIAL_MEDIA', pattern: matchedText }));
       sanitizedContent = sanitizedContent.replace(SOCIAL_HANDLE_PATTERN, '[FILTERED]');
     }
 
@@ -99,11 +99,11 @@ export class ChatFilterService {
     // 6. Long number sequences
     const numberMatches = content.match(NUMBER_SEQUENCE_PATTERN);
     if (numberMatches) {
-      numberMatches.forEach((m) => {
-        const digits = m.replace(/\D/g, '');
+      numberMatches.forEach((matchedText) => {
+        const digits = matchedText.replace(/\D/g, '');
         if (digits.length >= 8) {
-          flags.push({ type: 'PHONE', pattern: m });
-          sanitizedContent = sanitizedContent.replace(m, '[FILTERED]');
+          flags.push({ type: 'PHONE', pattern: matchedText });
+          sanitizedContent = sanitizedContent.replace(matchedText, '[FILTERED]');
         }
       });
     }

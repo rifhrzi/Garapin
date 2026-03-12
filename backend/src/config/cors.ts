@@ -11,7 +11,7 @@ function getAllowedOrigins(): string[] {
   const raw = env.CORS_ORIGINS ?? env.FRONTEND_URL;
   return raw
     .split(',')
-    .map((u) => u.trim())
+    .map((origin) => origin.trim())
     .filter(Boolean);
 }
 

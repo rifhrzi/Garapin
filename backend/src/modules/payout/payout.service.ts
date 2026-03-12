@@ -149,19 +149,19 @@ export class PayoutService {
     ]);
 
     return {
-      payouts: payouts.map((p) => ({
-        id: p.id,
-        amount: Number(p.amount),
-        status: p.status,
-        bankCode: p.bankCode,
-        bankName: p.bankName,
-        accountNumber: p.accountNumber,
-        accountHolderName: p.accountHolderName,
-        notes: p.notes,
-        failedReason: p.failedReason,
-        processedAt: p.processedAt,
-        completedAt: p.completedAt,
-        createdAt: p.createdAt,
+      payouts: payouts.map((payout) => ({
+        id: payout.id,
+        amount: Number(payout.amount),
+        status: payout.status,
+        bankCode: payout.bankCode,
+        bankName: payout.bankName,
+        accountNumber: payout.accountNumber,
+        accountHolderName: payout.accountHolderName,
+        notes: payout.notes,
+        failedReason: payout.failedReason,
+        processedAt: payout.processedAt,
+        completedAt: payout.completedAt,
+        createdAt: payout.createdAt,
       })),
       total,
       page,

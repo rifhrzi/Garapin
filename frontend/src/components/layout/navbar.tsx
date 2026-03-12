@@ -28,11 +28,11 @@ import {
 import { useMemo, useState, useCallback } from "react";
 
 // Lazy-load mobile Sheet menu (hidden on desktop)
-const Sheet = dynamic(() => import("@/components/ui/sheet").then((m) => m.Sheet), { ssr: false });
-const SheetContent = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetContent), { ssr: false });
-const SheetTrigger = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetTrigger), { ssr: false });
-const SheetHeader = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetHeader), { ssr: false });
-const SheetTitle = dynamic(() => import("@/components/ui/sheet").then((m) => m.SheetTitle), { ssr: false });
+const Sheet = dynamic(() => import("@/components/ui/sheet").then((sheetModule) => sheetModule.Sheet), { ssr: false });
+const SheetContent = dynamic(() => import("@/components/ui/sheet").then((sheetModule) => sheetModule.SheetContent), { ssr: false });
+const SheetTrigger = dynamic(() => import("@/components/ui/sheet").then((sheetModule) => sheetModule.SheetTrigger), { ssr: false });
+const SheetHeader = dynamic(() => import("@/components/ui/sheet").then((sheetModule) => sheetModule.SheetHeader), { ssr: false });
+const SheetTitle = dynamic(() => import("@/components/ui/sheet").then((sheetModule) => sheetModule.SheetTitle), { ssr: false });
 
 // Static link arrays -- defined outside component to avoid recreation
 const navLinks = [

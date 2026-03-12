@@ -101,7 +101,7 @@ function RegisterForm_() {
                   <FormLabel>I want to</FormLabel>
                   <Tabs
                     value={field.value}
-                    onValueChange={(v) => field.onChange(v)}
+                    onValueChange={(selectedRole) => field.onChange(selectedRole)}
                     className="w-full">
                     <TabsList className="grid w-full grid-cols-2">
                       <TabsTrigger value="CLIENT" className="gap-2">

@@ -204,8 +204,8 @@ export default function AdminProjectsPage() {
         <div className="flex gap-2">
           <Select
             value={categoryFilter}
-            onValueChange={(v) => {
-              setCategoryFilter(v);
+            onValueChange={(selectedCategory) => {
+              setCategoryFilter(selectedCategory);
               setPage(1);
             }}>
             <SelectTrigger className="w-[160px]">
@@ -213,17 +213,17 @@ export default function AdminProjectsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
-              {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+              {categories.map((category) => (
+                <SelectItem key={category.id} value={category.id}>
+                  {category.name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
           <Select
             value={typeFilter}
-            onValueChange={(v) => {
-              setTypeFilter(v);
+            onValueChange={(selectedType) => {
+              setTypeFilter(selectedType);
               setPage(1);
             }}>
             <SelectTrigger className="w-[160px]">
@@ -241,8 +241,8 @@ export default function AdminProjectsPage() {
       {/* Status Tabs */}
       <Tabs
         value={activeTab}
-        onValueChange={(v) => {
-          setActiveTab(v);
+        onValueChange={(selectedTab) => {
+          setActiveTab(selectedTab);
           setPage(1);
         }}>
         <TabsList className="flex-wrap">
